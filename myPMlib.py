@@ -1,5 +1,5 @@
-# This is a file for the myProjectmanagement toolset
-# it is all main class ciintainer file
+# This is a file for the myProjectManagement toolset
+# it is all main class cointainer file
 
 
 # Library imports
@@ -7,6 +7,8 @@
 import pickle
 from os import path
 import random
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 # Global functions and procedures
@@ -16,7 +18,7 @@ def saveObj(obj, filename):
         pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
 
 
-def load_object(filename):
+def loadObj(filename):
     '''load object data from file - as pickle do'''
     with open(filename, 'rb') as myInput:
         return pickle.load(myInput)
@@ -72,6 +74,18 @@ class myProject:
         for i, task in enumerate(self.tasks):
             print('[{}]: {} /id:{}/ L:{}'.format(i, task.name, task.iD,
                                                  task.level))
+    def listTeam(self):
+        '''This procedure print out the project Team'''
+        for i, member in enumerate(self.team):
+            
+            try:
+                member.role
+            except:
+                member.role = None
+            
+            print('[{}]: {} /Nick: {}/ Role: {}'.format(i, member.fullname,
+                                                        member.nick,
+                                                        member.role))
 
     def getTaskBy_iD(self, iD):
         '''This is function to return task index in myProject.tasks
@@ -109,6 +123,38 @@ class myProject:
             return self.tasks[iD]
         except:
             return False
+    
+    def m(self, iD):
+        '''A shorcut function to get team member'''
+        try:
+            return self.team[iD]
+        except:
+            return False
+        
+    def gantt(self, maxlevel=9999):
+        '''This procedure is about to draw simple gantt chart for tasks 
+        using matplotlib ad a framework'''
+        
+        fig, ax = plt.subplots()
+        y_labels = []
+        y_width = []
+        
+        for index, task in enumerate(self.tasks):
+            if task.level <= maxlevel:
+                y_labels.append('{} [{}]'.format(task.name, index))    
+                y_width.append(task.duration)
+            
+            
+        y_pos = np.arange(len(y_labels))
+
+        ax.barh(y_pos, y_width, color='green' )
+        ax.set_yticks(y_pos)
+        ax.set_yticklabels(y_labels)
+        ax.invert_yaxis()  # labels read top-to-bottom
+        ax.set_xlabel('Time as it goes')
+        ax.set_title('How fast do you want to go today?')
+
+        plt.show()
 
 
 class teamMember:
@@ -120,7 +166,8 @@ class teamMember:
         self.name = name
         self.secondname = secondname
         self.fullname = '{} {}'.format(name, secondname)
-
+        self.role = role
+        
         # Defining persion nick - this will be our iD for team member
         if not nick:
             self.nick = '{}{}'.format(self.name, self.secondname[0])
@@ -180,13 +227,19 @@ class task:
         return 'Task: {}, iD: {} Level: {}'.format(self.name, self.iD,
                                                    self.level)
 
+    def getDuration(self):
+        '''This function calculate the duration of the task based on sub tasks'''
+        
+
     def addSubTask(self, subtask):
         '''adding task to self subtasks'''
-        if subtask.level == 0:
+        if subtask.parentiD == None:
             self.subTasks.append(subtask)
             subtask.level = self.level + 1
             subtask.parentiD = self.iD
+            
             return True
+        
         else:
             print('This task alredy have parent. Parent iD: {}'
                   .format(subtask.parentiD))
@@ -198,7 +251,17 @@ class task:
         for task in self.subTasks:
             if task.iD == iD:
                 self.subTasks.remove(task)
-
+               
+    def raiseSubTasks(self):
+        '''This procedure take care of raising up level of sub tasks'''
+        
+        
+        for subtask in self.subTasks:
+            if len(subtask.subTasks) > 0:
+                subtask.level -= 1
+                subtask.raiseSubTasks()
+                
+                
     def clearLevel(self):
         '''This clears sefl parent and make the task level 0
         and remove all sub tasks dependences.
@@ -210,7 +273,15 @@ class task:
         parent.removeSubTask(self.iD)
 
         # Clearing subtasks (shifting level up to self parent)
-        # TODO : need to be placed hre
+        # Setting up parent iD for my subtasks as my parent iD
+        # and adding my subtasks to my paren subtask list
+        if len(self.subTasks) > 0:
+            for subtask in self.subTasks:
+                subtask.parentiD = None
+                parent.addSubTask(subtask)
+                # Raising sub task level    
+                subtask.raiseSubTasks()    
+            
 
         # Cleaning myself
         self.parentiD = None
@@ -241,9 +312,9 @@ class task:
         if len(self.subTasks) > 0:
             for subtask in self.subTasks:
                 subtask.info()
+    
 
-
-# Some hard coded definiiton for developemnt only
+# Some hard coded definition for developemnt only
 #pf = 'projekt.save'
 #
 #P = myProject('EntellEon', 'Tomek')
