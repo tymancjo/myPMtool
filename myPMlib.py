@@ -9,13 +9,15 @@ from os import path
 import random
 import matplotlib.pyplot as plt
 import numpy as np
+import datetime as dt
+
 
 
 # Global functions and procedures
 def saveObj(obj, filename):
     '''This functions save object data to disk - as pickle do'''
     with open(filename, 'wb') as output:
-        pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(obj, output, pickle.DEFAULT_PROTOCOL)
 
 
 def loadObj(filename):
@@ -44,6 +46,7 @@ class myProject:
         self.tasks = []
         self.team = []
         self.goals = []
+        
 
     def __repr__(self):
         '''standard repr respnse defininion'''
@@ -57,7 +60,7 @@ class myProject:
 
     def save(self, filename):
         with open(filename, 'wb') as output:
-            pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self, output, pickle.DEFAULT_PROTOCOL)
 
     def addToTeam(self, member):
         '''this method add person to team list'''
@@ -133,7 +136,7 @@ class myProject:
         
     def gantt(self, maxlevel=9999):
         '''This procedure is about to draw simple gantt chart for tasks 
-        using matplotlib ad a framework'''
+        using matplotlib as framework'''
         
         fig, ax = plt.subplots()
         y_labels = []
@@ -142,7 +145,7 @@ class myProject:
         for index, task in enumerate(self.tasks):
             if task.level <= maxlevel:
                 y_labels.append('{} [{}]'.format(task.name, index))    
-                y_width.append(task.duration)
+                y_width.append(task.duration.days)
             
             
         y_pos = np.arange(len(y_labels))
@@ -152,10 +155,48 @@ class myProject:
         ax.set_yticklabels(y_labels)
         ax.invert_yaxis()  # labels read top-to-bottom
         ax.set_xlabel('Time as it goes')
-        ax.set_title('How fast do you want to go today?')
+        ax.set_title('Gantt Chart for {} project.'.format(self.name))
 
         plt.show()
+        
 
+    def timeSort(self):
+        '''This is procedure to sort task for Gantt chart creation'''
+        pass
+        # TODO: Fill this up
+        
+    def getOwner(self, task):
+        '''This finction look up for the owner of a task'''
+        
+        for member in self.team:
+            for memberTask in member.tasks:
+                if memberTask is task:
+                    return member
+        return False
+    
+    def delTask(self, task):
+        '''This function delete the task from completly
+        there's no undo use wisley!'''
+        
+        #let's level the task to main level
+        try:
+            task.clearLevel()
+        except:
+            return False
+        else:
+            # Removing task form member list
+            owner = self.getOwner(task)
+            if owner == False:
+                print('No owner!')
+            else:
+                owner.remTask(task)
+            
+            index = self.getTaskBy_iD(task.iD)
+            self.tasks.pop(index)
+            
+            return True
+        
+        
 
 class teamMember:
     '''This is main class to define a teammemeber'''
@@ -189,8 +230,51 @@ class teamMember:
         return 'I\'m {} and I work in {} project.'.format(self.fullname,
                                                           self.project)
 
-
-class task:
+    def addTask(self, task):
+        '''This function add task to member tasklist'''
+                
+        try:
+            task.iD
+        except:
+            if isinstance(task, int) and task >= 0:
+                self.tasks.append(self.project.t(task))
+                return True
+            else:
+                return False
+        else:
+            self.tasks.append(task)
+            return True
+            
+    def listTasks(self):
+        '''This function prints out the member tasks with indexes'''
+        if len(self.tasks) > 0:        
+            for index, task in enumerate(self.tasks):
+                print('({}) {} / L:{}'.format(index, task.name, task.level))
+                 
+    def remTask(self, task):
+        '''This function removes given task form self tasks list'''
+        if len(self.tasks) > 0:
+            try:
+                task.iD
+            except:
+                
+                try:
+                    self.tasks.pop(task)
+                except:
+                    return False
+                else:
+                    return True
+            
+            else:                
+                for i, t in enumerate(self.tasks):
+                    if t is task:
+                        self.tasks.pop(i)
+                        return True
+            
+                    
+                    
+        
+class newTask:
     '''This is the calss that describe the tasks in the project
     task is the chunk of work that lead to goal '''
 
@@ -204,8 +288,14 @@ class task:
         # Some basic setup
         self.name = name
         self.desc = desc
-        self.duration = duration
-
+        self.duration = dt.timedelta(weeks=duration)
+        
+        # Timing management
+        self.start = dt.datetime.now()
+        self.end = self.start + self.duration
+        
+        self.prevTask = None
+        
         # More detiled setup
         # This is the level of the task in sub task tree
         # 0 is the top most level of tasks
@@ -313,20 +403,26 @@ class task:
             for subtask in self.subTasks:
                 subtask.info()
     
+    def setStart(self, time):
+        '''This procedure set up the start time of the task'''
+        pass
+        # TODO: fill this up!
+        
 
 # Some hard coded definition for developemnt only
-#pf = 'projekt.save'
-#
+pf = 'projekt.save'
+P = loadObj(pf)
+
 #P = myProject('EntellEon', 'Tomek')
 #M = teamMember(P, 'Marcin', 'Pruski')
 #R = teamMember(P, 'Robert', 'Czerner')
 #B = teamMember(P,'Przemysław', 'Fałkowski', 'Buźka')
 #
 #
-#T0 = task(P, 'Nowe MCC')
-#T1 = task(P, 'Shutters')
-#T2 = task(P, 'Shutters main')
-#T3 = task(P, 'Shutters cover')
+#T0 = newTask(P, 'Nowe MCC')
+#T1 = newTask(P, 'Shutters')
+#T2 = newTask(P, 'Shutters main')
+#T3 = newTask(P, 'Shutters cover')
 #
 #T0.addSubTask(T1)
 #T1.addSubTask(T2)
