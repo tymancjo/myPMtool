@@ -147,7 +147,7 @@ class myProject:
 
         for task in self.tasks:
             if task.level == 0:
-                task.info()
+                task.info
 
         print('*********   END       **********')
         return None
@@ -182,15 +182,21 @@ class myProject:
 
             for index, task in enumerate(tasklist):
                 if task.level <= maxlevel:
-
+                    # Get Master index 
+                    masterindex = self.getTaskBy_iD(task.iD)
                     # Set up the name
-                    y_labels.append('{} [{}]'.format(task.name, index))
+                    y_labels.append('{} [{}]'.format(task.name, masterindex))
                     # bar lenght on limescale
                     duration = task.duration.days
                     y_width.append(duration)
                     # task beggining on timescale
                     y_left.append(d2n(task.start))
-                    y_color.append('orange')
+                    
+                    if task.level == 0:
+                        y_color.append('blue')
+                    else:
+                        y_color.append('C{}'.format(task.level))
+                        
                     time_label.append('{:%d %m %Y}'.format(task.start))
 
             # Adding last tick mark at the end
@@ -205,32 +211,44 @@ class myProject:
             ax.barh(y_pos, y_width, left=y_left, color=y_color)
             ax.set_yticks(y_pos)
             ax.set_yticklabels(y_labels)
-            ax.invert_yaxis()  # labels read top-to-bottom
+#            ax.invert_yaxis()  # labels read top-to-bottom
 
             ax.set_xticks(y_left)
             ax.set_xticklabels(time_label)
-
+            
+            minorLocator = np.arange(min(y_left),max(y_left),7)
+            
+            # Drawing vertical ticks for weeks
+            for _x in minorLocator:
+                ax.axvline(x=_x, ls=':', linewidth=1, color='0.6')
+                
             labelsx = ax.get_xticklabels()
             plt.setp(labelsx, rotation=45, fontsize=10, ha='right')
 
-            ax.set_xlabel('Time as it goes')
+            ax.set_xlabel('Time [grid in weeks]')
             ax.set_title('Gantt Chart for {} project.'.format(self.name))
 
-#            plt.tight_layout()
+            plt.tight_layout()
+            plt.grid()
+            
+            
             plt.show()
         else:
             print('No tasklist')
             return False
 
-    def timeSort(self):
+    def timeSort(self ,timeline = None):
         '''This is procedure to sort task for Gantt chart creation
         it's using order of task in project.tasks list as timeline order
         and sort task as per this'''
-
-        for index, task in enumerate(self.timeline):
+        
+        if timeline is None:
+            timeline = self.timeline
+            
+        for index, task in enumerate(timeline):
             if index > 0:
-                task.setStart(self.timeline[index-1].end)
-                print('loop na: {}'.format(self.timeline[index-1].end))
+                task.setStart(timeline[index-1].end)
+                print('loop na: {}'.format(timeline[index-1].end))
 
     def getOwner(self, task):
         '''This finction look up for the owner of a task'''
@@ -481,33 +499,66 @@ class newTask:
         index = self.project.getTaskBy_iD(task.iD)
         prestr = ''
         
+        # Making all indexes print out as 4 symbols size
         if len(str(index)) < 4:
             for k in range(4-len(str(index))):
                 prestr +='.'
                 
-            
-            
-        string = '{}{}| '.format(prestr, index)
+        # Adding empty line for level 0 tasks    
+        if task.level == 0:
+            string = '____\n{}{}| '.format(prestr, index)
+            MaxL = 65
+        else:
+            string = '{}{}| '.format(prestr, index)
+            MaxL = 60
 
         if task.level > 0:
             for x in range(3 * task.level - 1):
                 string += ' '
             string += '\u21B3'
         
-
-        print(string +
-              '[{}]'
-              .format(task.name, task.duration.days, task.level))
+        if task in self.project.timeline:
+            string += '\x1b[32m[ {} ]\x1b[0m'.format(task.name)
+            MaxL = 69
+        else:
+            string += '[ {} ]'.format(task.name)
+        
+        
+        
+        for x in range(MaxL - len(string)):
+            string += '_'
+        
+        print(string + '[{} weeks]'
+              .format( task.duration.days / 7, task.level))
                 # : duration: {} days |level:{} |
+    @property
     def info(self):
         '''printing out the global infor of this task'''
         self.printInfo(self)
 
         if len(self.subTasks) > 0:
             for subtask in self.subTasks:
-                subtask.info()
+                subtask.info
 
-
+    def setTimeBySub(self):
+        '''this procedure set up start and end date form subtasks'''
+        
+        starts = []
+        ends =[]
+        
+        for task in self.subTasks:
+            starts.append(task.start)
+            ends.append(task.end)
+        
+        start = min(starts)
+        end = max(ends)
+        
+        self.start = start
+        self.end = end
+        self.duration = end - start
+        
+        print(start,end)
+        
 # Some hard coded definition for developemnt only
 pf = 'projekt.save'
 P = loadObj(pf)
