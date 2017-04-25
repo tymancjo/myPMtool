@@ -173,10 +173,13 @@ class myProject:
             tasklist = self.timeline
 
         if len(tasklist) > 0:
-            fig, ax = plt.subplots()
+            fig = plt.figure('Gantt Chart')
+            fig.clear()            
+            ax = fig.add_subplot(111)
             y_labels = []
             y_width = []
             y_left = []
+            y_right = []
             y_color = []
             time_label = []
 
@@ -185,12 +188,14 @@ class myProject:
                     # Get Master index 
                     masterindex = self.getTaskBy_iD(task.iD)
                     # Set up the name
-                    y_labels.append('{} [{}]'.format(task.name, masterindex))
+                    y_labels.append('{}: {} [{}]'.format(index, task.name,
+                                                          masterindex))
                     # bar lenght on limescale
                     duration = task.duration.days
                     y_width.append(duration)
                     # task beggining on timescale
                     y_left.append(d2n(task.start))
+                    y_right.append(d2n(task.start) + duration)
                     
                     if task.level == 0:
                         y_color.append('blue')
@@ -202,8 +207,8 @@ class myProject:
             # Adding last tick mark at the end
             time_label.append('{:%d %m %Y}'.format(task.end))
             y_labels.append('END')
-            y_width.append(0.05)
-            y_left.append(d2n(task.end))
+            y_width.append(0.1)
+            y_left.append(max(y_right))
             y_color.append('black')
             
             y_pos = np.arange(len(y_labels))
@@ -221,7 +226,11 @@ class myProject:
             # Drawing vertical ticks for weeks
             for _x in minorLocator:
                 ax.axvline(x=_x, ls=':', linewidth=1, color='0.6')
-                
+            
+            # Drawing today line
+            today = d2n(dt.datetime.today())
+            ax.axvline(x=today, ls='--', linewidth=1, color='red')
+            
             labelsx = ax.get_xticklabels()
             plt.setp(labelsx, rotation=45, fontsize=10, ha='right')
 
@@ -229,7 +238,7 @@ class myProject:
             ax.set_title('Gantt Chart for {} project.'.format(self.name))
 
             plt.tight_layout()
-            plt.grid()
+#           plt.grid()
             
             
             plt.show()
@@ -248,8 +257,16 @@ class myProject:
         for index, task in enumerate(timeline):
             if index > 0:
                 task.setStart(timeline[index-1].end)
+                task.prevTask = timeline[index-1]
+                
+                if task is not timeline[-1]:
+                    task.nextTask = timeline[index + 1]
+                
                 print('loop na: {}'.format(timeline[index-1].end))
-
+            else:
+                task.nextTask = timeline[index + 1] 
+                
+                
     def getOwner(self, task):
         '''This finction look up for the owner of a task'''
 
@@ -280,7 +297,26 @@ class myProject:
             self.tasks.pop(index)
 
             return True
-
+    
+    def chain(self, *arg):
+        '''this function returns a list of task objects based on the 
+        global index in project.tasks'''
+        
+        issue = False
+        outList = []
+        
+        for t in arg:
+            try:
+                self.tasks[t].iD
+            except:
+                issue = True
+            else:
+                outList.append(self.tasks[t])
+        if not issue:
+            return outList
+        else:
+            return False
+       
 
 class teamMember:
     '''This is main class to define a teammemeber'''
@@ -390,6 +426,7 @@ class newTask:
         self.end = self.start + self.duration
 
         self.prevTask = None
+        self.nextTask = None
 
         # More detailed setup
         # This is the level of the task in sub task tree
@@ -497,6 +534,12 @@ class newTask:
         '''Main printer for a task'''
 
         index = self.project.getTaskBy_iD(task.iD)
+        owner = self.getOwner()
+        if owner is not False:
+            owner = owner.nick
+        else:
+            owner = 'No owner'
+        
         prestr = ''
         
         # Making all indexes print out as 4 symbols size
@@ -523,14 +566,12 @@ class newTask:
         else:
             string += '[ {} ]'.format(task.name)
         
-        
-        
         for x in range(MaxL - len(string)):
             string += '_'
         
-        print(string + '[{} weeks]'
-              .format( task.duration.days / 7, task.level))
-                # : duration: {} days |level:{} |
+        print(string + '[{} weeks] {}'
+              .format( task.duration.days / 7, owner))
+            
     @property
     def info(self):
         '''printing out the global infor of this task'''
@@ -558,6 +599,14 @@ class newTask:
         self.duration = end - start
         
         print(start,end)
+        
+    def getOwner(self):
+        '''looking for this task owner'''
+        for m in self.project.team:
+            for t in m.tasks:
+                if t is self:
+                    return m
+        return False        
         
 # Some hard coded definition for developemnt only
 pf = 'projekt.save'
