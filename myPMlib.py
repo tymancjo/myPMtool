@@ -17,6 +17,7 @@ import datetime as dt
 d2n = matplotlib.dates.date2num
 n2d = matplotlib.dates.num2date
 
+
 # Global functions and procedures
 def getWeek(date):
     '''Just handy wrapper around the isocalendar method'''
@@ -24,6 +25,7 @@ def getWeek(date):
         return date.isocalendar()[1]
     except:
         return False
+
 
 def getYear(date):
     '''Just handy wrapper around the isocalendar method'''
@@ -66,7 +68,6 @@ class myProject:
         self.team = []
         self.goals = []
         self.timeline = []
-        
 
     def __repr__(self):
         '''standard repr respnse defininion'''
@@ -92,28 +93,28 @@ class myProject:
         self.tasks.append(task)
         # TODO: making sure we dont duplicate team members!
 
-    def listTasks(self, level = 9999):
+    def listTasks(self, level=9999):
         '''This procedure print out the task list'''
         for i, task in enumerate(self.tasks):
             if task.level <= level:
                 print('[{}]: {} /id:{}/ L:{}'.format(i, task.name,
                                                      task.iD, task.level))
+
     @property
     def listTimeline(self):
         '''This procedure print out the task list in the Timeline'''
         for i, task in enumerate(self.timeline):
             print('[{}]: {} /id:{}/ L:{}'.format(i, task.name, task.iD,
-                                                 task.level))                                            
+                                                 task.level))
+
     @property
     def listTeam(self):
         '''This procedure print out the project Team'''
         for i, member in enumerate(self.team):
-            
             try:
                 member.role
             except:
                 member.role = None
-            
             print('[{}]: {} /Nick: {}/ Role: {}'.format(i, member.fullname,
                                                         member.nick,
                                                         member.role))
@@ -157,79 +158,94 @@ class myProject:
             return self.tasks[iD]
         except:
             return False
-    
+
     def m(self, iD):
         '''A shorcut function to get team member'''
         try:
             return self.team[iD]
         except:
             return False
-        
-    
-    def gantt(self, maxlevel=9999, tasklist = None):
-        '''This procedure is about to draw simple gantt chart for tasks 
-        using matplotlib as framework'''
-        
-        if tasklist == None:
+
+    def gantt(self, tasklist=None, maxlevel=9999):
+        '''This procedure is about to draw simple gantt chart
+        for tasks using matplotlib as framework'''
+        if tasklist is None:
             tasklist = self.timeline
-        
-        fig, ax = plt.subplots()
-        y_labels = []
-        y_width = []
-        y_left = []
-               
-        for index, task in enumerate(tasklist):
-            if task.level <= maxlevel:
-                
-                # Set up the name
-                y_labels.append('{} [{}]'.format(task.name, index))    
-                
-                # bar lenght on limescale
-                duration = task.duration.days
-                y_width.append(duration)
-                
-                # task beggining on timescale
-                y_left.append(d2n(task.start))
-                
-                
+
+        if len(tasklist) > 0:
+            fig, ax = plt.subplots()
+            y_labels = []
+            y_width = []
+            y_left = []
+            y_color = []
+            time_label = []
+
+            for index, task in enumerate(tasklist):
+                if task.level <= maxlevel:
+
+                    # Set up the name
+                    y_labels.append('{} [{}]'.format(task.name, index))
+                    # bar lenght on limescale
+                    duration = task.duration.days
+                    y_width.append(duration)
+                    # task beggining on timescale
+                    y_left.append(d2n(task.start))
+                    y_color.append('orange')
+                    time_label.append('{:%d %m %Y}'.format(task.start))
+
+            # Adding last tick mark at the end
+            time_label.append('{:%d %m %Y}'.format(task.end))
+            y_labels.append('END')
+            y_width.append(0.05)
+            y_left.append(d2n(task.end))
+            y_color.append('black')
             
-        y_pos = np.arange(len(y_labels))
+            y_pos = np.arange(len(y_labels))
 
-        ax.barh(y_pos, y_width, left=y_left, color='orange' )
-        ax.set_yticks(y_pos)
-        ax.set_yticklabels(y_labels)
-        ax.invert_yaxis()  # labels read top-to-bottom
-        ax.set_xlabel('Time as it goes')
-        ax.set_title('Gantt Chart for {} project.'.format(self.name))
+            ax.barh(y_pos, y_width, left=y_left, color=y_color)
+            ax.set_yticks(y_pos)
+            ax.set_yticklabels(y_labels)
+            ax.invert_yaxis()  # labels read top-to-bottom
 
-        plt.show()
-        
+            ax.set_xticks(y_left)
+            ax.set_xticklabels(time_label)
+
+            labelsx = ax.get_xticklabels()
+            plt.setp(labelsx, rotation=45, fontsize=10, ha='right')
+
+            ax.set_xlabel('Time as it goes')
+            ax.set_title('Gantt Chart for {} project.'.format(self.name))
+
+            plt.tight_layout()
+            plt.show()
+        else:
+            print('No tasklist')
+            return False
 
     def timeSort(self):
         '''This is procedure to sort task for Gantt chart creation
         it's using order of task in project.tasks list as timeline order
         and sort task as per this'''
-        
-        for index, task in enumerate(self.timeline):
-            if index > 0 :
-                task.setStart(self.tasks[index-1].end)
-                print('loop na: {}'.format(self.tasks[index-1].end))
 
-        
+        for index, task in enumerate(self.timeline):
+            if index > 0:
+                task.setStart(self.timeline[index-1].end)
+                print('loop na: {}'.format(self.timeline[index-1].end))
+
     def getOwner(self, task):
         '''This finction look up for the owner of a task'''
-        
+
         for member in self.team:
             for memberTask in member.tasks:
                 if memberTask is task:
                     return member
         return False
-    
+
     def delTask(self, task):
         '''This function delete the task from completly
         there's no undo use wisley!'''
-        
-        #let's level the task to main level
+
+        # let's level the task to main level
         try:
             task.clearLevel()
         except:
@@ -237,17 +253,16 @@ class myProject:
         else:
             # Removing task form member list
             owner = self.getOwner(task)
-            if owner == False:
+            if owner is False:
                 print('No owner!')
             else:
                 owner.remTask(task)
-            
+
             index = self.getTaskBy_iD(task.iD)
             self.tasks.pop(index)
-            
+
             return True
-        
-        
+
 
 class teamMember:
     '''This is main class to define a teammemeber'''
@@ -259,7 +274,7 @@ class teamMember:
         self.secondname = secondname
         self.fullname = '{} {}'.format(name, secondname)
         self.role = role
-        
+
         # Defining persion nick - this will be our iD for team member
         if not nick:
             self.nick = '{}{}'.format(self.name, self.secondname[0])
@@ -283,7 +298,7 @@ class teamMember:
 
     def addTask(self, task):
         '''This function add task to member tasklist'''
-                
+
         try:
             task.iD
         except:
@@ -295,33 +310,34 @@ class teamMember:
         else:
             self.tasks.append(task)
             return True
-            
+
     def listTasks(self):
         '''This function prints out the member tasks with indexes'''
-        if len(self.tasks) > 0:        
+        if len(self.tasks) > 0:
             for index, task in enumerate(self.tasks):
                 print('({}) {} / L:{}'.format(index, task.name, task.level))
-                 
+
     def remTask(self, task):
         '''This function removes given task form self tasks list'''
         if len(self.tasks) > 0:
             try:
                 task.iD
             except:
-                
+
                 try:
                     self.tasks.pop(task)
                 except:
                     return False
                 else:
                     return True
-            
-            else:                
+
+            else:
                 for i, t in enumerate(self.tasks):
                     if t is task:
                         self.tasks.pop(i)
                         return True
-    @property        
+
+    @property
     def info(self):
         '''This procedure print out team member info'''
 
@@ -332,9 +348,9 @@ class teamMember:
 
         self.listTasks()
 
-        print('*********   END       **********')                    
-                    
-        
+        print('*********   END       **********')
+
+
 class newTask:
     '''This is the calss that describe the tasks in the project
     task is the chunk of work that lead to goal '''
@@ -350,13 +366,13 @@ class newTask:
         self.name = name
         self.desc = desc
         self.duration = dt.timedelta(weeks=duration)
-        
+
         # Timing management
         self.start = dt.datetime.now()
         self.end = self.start + self.duration
-        
+
         self.prevTask = None
-        
+
         # More detailed setup
         # This is the level of the task in sub task tree
         # 0 is the top most level of tasks
@@ -379,34 +395,31 @@ class newTask:
                                                    self.level)
 
     def getDuration(self):
-        '''This function calculate the duration of the task based on sub tasks'''
+        '''This function calculate the duration of
+        the task based on sub tasks'''
         pass
-    
+
     def setDuration(self, wks):
         '''this set up the duration of the task'''
-        self.duration = dt.timedelta(weeks = wks)
+        self.duration = dt.timedelta(weeks=wks)
         self.end = self.start + self.duration
-        
-        
-        
-    
+
     def setStart(self, time):
         '''This procedure set up the start time of the task'''
         self.start = time
         print('Start date set as: {}'.format(self.start))
-        
+
         self.end = self.start + self.duration
-        
 
     def addSubTask(self, subtask):
         '''adding task to self subtasks'''
-        if subtask.parentiD == None:
+        if subtask.parentiD is None:
             self.subTasks.append(subtask)
             subtask.level = self.level + 1
             subtask.parentiD = self.iD
-            
+
             return True
-        
+
         else:
             print('This task alredy have parent. Parent iD: {}'
                   .format(subtask.parentiD))
@@ -418,33 +431,30 @@ class newTask:
         for task in self.subTasks:
             if task.iD == iD:
                 self.subTasks.remove(task)
-               
+
     def raiseSubTasks(self):
         '''This procedure take care of raising up level of sub tasks'''
-        # Raising my own level        
+        # Raising my own level
         self.level -= 1
-        
+
         # Ordering my sub tasks to rais levels
         for subtask in self.subTasks:
             subtask.raiseSubTasks()
-           
-               
-                
+
     def clearLevel(self):
         '''This clears sefl parent and make the task level 0
         and remove all sub tasks dependences.
         Use with caution!!! '''
         # Cleaning parent
         # Getting the paren index in project.tasks
-        
-        if self.parentiD != None:
+
+        if self.parentiD is not None:
             index = self.project.getTaskBy_iD(self.parentiD)
             parent = self.project.tasks[index]
             parent.removeSubTask(self.iD)
         else:
-            parent = False 
+            parent = False
             print('No parent')
-            
 
         # Clearing subtasks (shifting level up to self parent)
         # Setting up parent iD for my subtasks as my parent iD
@@ -452,11 +462,11 @@ class newTask:
         if len(self.subTasks) > 0:
             for subtask in self.subTasks:
                 subtask.parentiD = None
-                
-                # Raising sub task level    
-                subtask.raiseSubTasks()    
-                
-                if parent != False:
+
+                # Raising sub task level
+                subtask.raiseSubTasks()
+
+                if parent is not False:
                     parent.addSubTask(subtask)
 
         # Cleaning myself
@@ -477,9 +487,10 @@ class newTask:
                 string += ' '
             string += '\u21B3'
 
-        print(string + '[{}]: {} | {} |duration: {} |level:{} | Start: {}'
-              .format(task.iD, task.name, task.desc,
-                      task.duration, task.level, task.start))
+        print(string +
+              '[{}]: {} | {} |duration: {} days |level:{} | Start: {:%d %m %Y}'
+              .format(task.iD, task.name, task.desc, task.duration.days, task.level,
+                      task.start))
 
     def info(self):
         '''printing out the global infor of this task'''
@@ -488,11 +499,7 @@ class newTask:
         if len(self.subTasks) > 0:
             for subtask in self.subTasks:
                 subtask.info()
-    
-   
-        
-    
-        
+
 
 # Some hard coded definition for developemnt only
 pf = 'projekt.save'
