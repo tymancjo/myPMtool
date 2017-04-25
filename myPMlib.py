@@ -216,7 +216,7 @@ class myProject:
             ax.set_xlabel('Time as it goes')
             ax.set_title('Gantt Chart for {} project.'.format(self.name))
 
-            plt.tight_layout()
+#            plt.tight_layout()
             plt.show()
         else:
             print('No tasklist')
@@ -479,19 +479,26 @@ class newTask:
         '''Main printer for a task'''
 
         index = self.project.getTaskBy_iD(task.iD)
-
-        string = '({})'.format(index)
+        prestr = ''
+        
+        if len(str(index)) < 4:
+            for k in range(4-len(str(index))):
+                prestr +='.'
+                
+            
+            
+        string = '{}{}| '.format(prestr, index)
 
         if task.level > 0:
             for x in range(3 * task.level - 1):
                 string += ' '
             string += '\u21B3'
+        
 
         print(string +
-              '[{}]: {} | {} |duration: {} days |level:{} | Start: {:%d %m %Y}'
-              .format(task.iD, task.name, task.desc, task.duration.days, task.level,
-                      task.start))
-
+              '[{}]'
+              .format(task.name, task.duration.days, task.level))
+                # : duration: {} days |level:{} |
     def info(self):
         '''printing out the global infor of this task'''
         self.printInfo(self)
