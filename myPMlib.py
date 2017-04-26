@@ -130,6 +130,17 @@ class myProject:
         return False
 
     @property
+    def infoHTML(self):
+        '''This procedure get back info in form of HTML
+        language'''
+        
+        print('------------------------------------------')
+        for task in self.tasks:
+            if task.level == 0:
+                task.infoHTML    
+        print('------------------------------------------')
+        
+    @property
     def info(self):
         '''This procedure print out project info
         it is set up to dont need brackets when called'''
@@ -529,7 +540,7 @@ class newTask:
         self.level = 0
         del(self.subTasks)
         self.subTasks = []
-
+        
     def printInfo(self, task):
         '''Main printer for a task'''
 
@@ -571,7 +582,28 @@ class newTask:
         
         print(string + '[{} weeks] {}'
               .format( task.duration.days / 7, owner))
+    
+    def printHTML(self, task):
+        '''this procedure prepare simple data as html'''
+        
+        string =''
+        
+        if task.level > 0:
+            for x in range(6 * task.level - 1):
+                string += '\x1b[30m.'
+            string += '\x1b[0m\u21B3'
             
+        print('{} \x1b[3{}m{}\x1b[0m'.format(string, int(task.level+1), task.name))
+    
+    @property
+    def infoHTML(self):
+        '''this procedure set out the html version of info'''
+        self.printHTML(self)
+
+        if len(self.subTasks) > 0:
+            for subtask in self.subTasks:
+                subtask.infoHTML
+    
     @property
     def info(self):
         '''printing out the global infor of this task'''
