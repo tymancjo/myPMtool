@@ -257,7 +257,7 @@ class myProject:
             ax.set_title('Gantt Chart for {} project.'.format(self.name))
 
             plt.tight_layout()
-            plt.grid(which='major', alpha=0.5)
+            plt.grid(which='major', alpha=0.3)
             plt.show()
 
         else:
