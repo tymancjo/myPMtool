@@ -177,7 +177,7 @@ class myProject:
         except:
             return False
 
-    def gantt(self, tasklist=None, maxlevel=9999):
+    def gantt(self, tasklist=None, maxlevel=9999, names=True):
         '''This procedure is about to draw simple gantt chart
         for tasks using matplotlib as framework'''
         if tasklist is None:
@@ -187,6 +187,7 @@ class myProject:
             fig = plt.figure('Gantt Chart')
             fig.clear()
             ax = fig.add_subplot(111)
+
             y_labels = []
             y_width = []
             y_left = []
@@ -215,6 +216,13 @@ class myProject:
 
                     time_label.append('{:%d %m %Y}'.format(task.start))
 
+                    owner_label = task.getOwner()
+                    if owner_label is not False and names:
+                        # prining the owner nick
+                        ax.text(d2n(task.start) + duration + 1, index,
+                                owner_label.nick, color='black',
+                                fontsize=8, verticalalignment='center')
+
             # Adding last tick mark at the end
             time_label.append('{:%d %m %Y}'.format(task.end))
             y_labels.append('END')
@@ -223,24 +231,16 @@ class myProject:
             y_color.append('black')
 
             y_pos = np.arange(len(y_labels))
-
+            # Drawing the main rectangle
             ax.barh(y_pos, y_width, left=y_left, color=y_color,
                     edgecolor='black', linewidth=1)
 
             ax.set_yticks(y_pos)
             ax.set_yticklabels(y_labels)
 #            ax.invert_yaxis()  # labels read top-to-bottom
-            plt.xticks(np.arange(min(y_left), max(y_left)+7, 7))
+            plt.xticks(np.arange(min(y_left), max(y_left)+2*7, 7))
             myFmt = matplotlib.dates.DateFormatter("%d-%m-%Y")
             ax.xaxis.set_major_formatter(myFmt)
-            # ax.set_xticks(y_left)
-            # ax.set_xticklabels(time_label)
-
-            # minorLocator = np.arange(min(y_left), max(y_left), 7)
-            #
-            # # Drawing vertical ticks for weeks
-            # for _x in minorLocator:
-            #     ax.axvline(x=_x, ls=':', linewidth=1, color='0.6')
 
             # Drawing today line
             today = d2n(dt.datetime.today())
@@ -255,6 +255,7 @@ class myProject:
             plt.tight_layout()
             plt.grid(which='major', alpha=0.5)
             plt.show()
+
         else:
             print('No tasklist')
             return False
