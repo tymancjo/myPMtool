@@ -20,7 +20,17 @@ n2d = matplotlib.dates.num2date
 
 # Global functions and procedures
 def getWeek(date):
-    '''Just handy wrapper around the isocalendar method'''
+    '''Just handy wrapper around the isocalendar method
+    it returns the week number in the year (ISO week) of
+    a given date.
+
+    Inputs:
+    date: date in datetime module format
+
+    Returns:
+    Number of a week of the year
+    False - if conversion didn't work'''
+
     try:
         return date.isocalendar()[1]
     except:
@@ -28,7 +38,16 @@ def getWeek(date):
 
 
 def getYear(date):
-    '''Just handy wrapper around the isocalendar method'''
+    '''Just handy wrapper around the isocalendar method
+    it returns the year of the given date.
+
+    Inputs:
+    date: date in datetime module format
+
+    Returns:
+    Yeaa in 4 digit format
+    False - if conversion didn't work
+    '''
     try:
         return date.isocalendar()[0]
     except:
@@ -36,22 +55,62 @@ def getYear(date):
 
 
 def saveObj(obj, filename):
-    '''This functions save object data to disk - as pickle do'''
+    '''This procedure save object data to disk.
+    it uses the Pickle module to derialize the objects.
+
+    Inputs:
+    obj: object to be saved.
+    Generally intention is to be the main project object as
+    it contins inside all the project dta, objects, lists and varialbles
+    by this it's saving all the project data.
+
+    filename: file to save the data to with properly delivered path.
+    If the file don't exist it will be created.
+
+    Returns:
+    Nothing - it's procedure.
+
+    Example use:``
+    exaveObj(P, 'project.save')
+    where P is myProject class object.
+    '''
     with open(filename, 'wb') as output:
         pickle.dump(obj, output, pickle.DEFAULT_PROTOCOL)
 
 
 def loadObj(filename):
-    '''load object data from file - as pickle do'''
+    '''load object data from file that was saved by saveObj function.
+    Inputs:
+    filename: file to save the data to with properly delivered path.
+
+    Returns:
+    Recreated object
+
+    Example use:``
+
+    P = loadObj('project.save')
+    recreate P as myProject class object.
+    '''
     with open(filename, 'rb') as myInput:
         return pickle.load(myInput)
 
 
 # Global classes
 class myProject:
-    '''This is main conitainer class.
+    '''This is main conitainer class for the project.
     it will hold all data and allow for a save and resotre it
-    on save or load'''
+    on save or load
+
+    All work need to start with creation of a project object.
+
+    Usage example:
+
+    P = myProject('Project Name', 'PM')
+
+    Inputs:
+    name: a name for the project (string)
+    owner: project owner (string)
+    '''
 
     def __init__(self, name, owner='', filename=__file__):
         '''this is the main initilisation method'''
@@ -80,6 +139,23 @@ class myProject:
             format(self.name, self.owner, self.status)
 
     def save(self, filename):
+        '''This procedure save object data to disk.
+        it uses the Pickle module to derialize the objects.
+
+        Inputs:
+
+        filename: file to save the data to with properly delivered path.
+        If the file don't exist it will be created.
+
+        Returns:
+        Nothing - it's procedure.
+
+        Example use:
+
+        P.save('project.save')
+
+        where P is myProject class object.
+        '''
         with open(filename, 'wb') as output:
             pickle.dump(self, output, pickle.DEFAULT_PROTOCOL)
 
@@ -143,7 +219,7 @@ class myProject:
     @property
     def info(self):
         '''This procedure print out project info
-        it is set up to dont need brackets when called'''
+        it is set up to don't need brackets when called'''
 
         print('********* PROJECT INFO **********')
         print('Name: {}'.format(self.name))
@@ -229,10 +305,6 @@ class myProject:
 
             # Adding last tick mark at the end
             time_label.append('{:%d %m %Y}'.format(task.end))
-            # y_labels.append('END')
-            # y_width.append(0.1)
-            # y_left.append(max(y_right))
-            # y_color.append('black')
 
             y_pos = np.arange(len(y_labels))
             # Drawing the main rectangle
