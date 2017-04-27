@@ -180,6 +180,10 @@ class myProject:
     def gantt(self, tasklist=None, maxlevel=9999, names=True):
         '''This procedure is about to draw simple gantt chart
         for tasks using matplotlib as framework'''
+
+        # plt.style.use('seaborn-pastel')
+        plt.style.use('seaborn-muted')
+
         if tasklist is None:
             tasklist = self.timeline
 
@@ -225,10 +229,10 @@ class myProject:
 
             # Adding last tick mark at the end
             time_label.append('{:%d %m %Y}'.format(task.end))
-            y_labels.append('END')
-            y_width.append(0.1)
-            y_left.append(max(y_right))
-            y_color.append('black')
+            # y_labels.append('END')
+            # y_width.append(0.1)
+            # y_left.append(max(y_right))
+            # y_color.append('black')
 
             y_pos = np.arange(len(y_labels))
             # Drawing the main rectangle
@@ -238,7 +242,7 @@ class myProject:
             ax.set_yticks(y_pos)
             ax.set_yticklabels(y_labels)
 #            ax.invert_yaxis()  # labels read top-to-bottom
-            plt.xticks(np.arange(min(y_left), max(y_left)+2*7, 7))
+            plt.xticks(np.arange(min(y_left), max(y_right)+2*7, 7))
             myFmt = matplotlib.dates.DateFormatter("%d-%m-%Y")
             ax.xaxis.set_major_formatter(myFmt)
 
