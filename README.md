@@ -1,11 +1,11 @@
-#Welcome to myPMtool’s documentation!
+# Welcome to myPMtool’s documentation!
 
 This is documenatation for python based library myPMlib. It was created as very customized set of simple tools to manage projects by
 
-    planning work for the team,
-    managing the tasks,
-    create customized Gantt charts
-    helping to create WBS
+- planning work for the team,
+- managing the tasks,
+- create customized Gantt charts
+- helping to create WBS
 
 It was never mind to become full fladged piece of software and for the moment it’s main purpose is to allow do my work (as Program Manager) and practice python coding at the same time. Suprisigly enough it prove to be quite a handy tool.
 
