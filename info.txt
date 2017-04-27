@@ -1,0 +1,19 @@
+%load_ext autoreload
+%autoreload 2
+%matplotlib tk
+
+
+import matplotlib.pyplot as plt
+
+In [2]: %matplotlib tk
+
+In [3]: from matplotlib.sankey import Sankey as sk
+
+In [4]: flows = [1,-0.1,-0.2,-0.3,-0.3,-0.6]
+
+In [5]: names = ['Investments','Q1','Q2','','Q3','Q4']
+
+In [6]: orient = [0,1,1,1,1,1]
+
+In [7]: sk(flows=flows, labels=names, orientations=orient, head_angle=140).finish()
+
