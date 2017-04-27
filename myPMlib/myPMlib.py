@@ -224,19 +224,23 @@ class myProject:
 
             y_pos = np.arange(len(y_labels))
 
-            ax.barh(y_pos, y_width, left=y_left, color=y_color)
+            ax.barh(y_pos, y_width, left=y_left, color=y_color,
+                    edgecolor='black', linewidth=1)
+
             ax.set_yticks(y_pos)
             ax.set_yticklabels(y_labels)
 #            ax.invert_yaxis()  # labels read top-to-bottom
+            plt.xticks(np.arange(min(y_left), max(y_left)+7, 7))
+            myFmt = matplotlib.dates.DateFormatter("%d-%m-%Y")
+            ax.xaxis.set_major_formatter(myFmt)
+            # ax.set_xticks(y_left)
+            # ax.set_xticklabels(time_label)
 
-            ax.set_xticks(y_left)
-            ax.set_xticklabels(time_label)
-
-            minorLocator = np.arange(min(y_left), max(y_left), 7)
-
-            # Drawing vertical ticks for weeks
-            for _x in minorLocator:
-                ax.axvline(x=_x, ls=':', linewidth=1, color='0.6')
+            # minorLocator = np.arange(min(y_left), max(y_left), 7)
+            #
+            # # Drawing vertical ticks for weeks
+            # for _x in minorLocator:
+            #     ax.axvline(x=_x, ls=':', linewidth=1, color='0.6')
 
             # Drawing today line
             today = d2n(dt.datetime.today())
@@ -249,7 +253,7 @@ class myProject:
             ax.set_title('Gantt Chart for {} project.'.format(self.name))
 
             plt.tight_layout()
-#           plt.grid()
+            plt.grid(which='major', alpha=0.5)
             plt.show()
         else:
             print('No tasklist')
@@ -577,8 +581,13 @@ class newTask:
         for x in range(MaxL - len(string)):
             string += '_'
 
-        print(string + '[{} weeks] {}'
-              .format(task.duration.days / 7, owner))
+        duration = task.duration.days / 7
+        duration_unit = 'weeks'
+        if duration < 1:
+            duration = task.duration.days
+            duration_unit = 'days'
+        print(string + '[{} {}] {}'
+              .format(duration, duration_unit, owner))
 
     def printHTML(self, task):
         '''this procedure prepare simple data as html'''
