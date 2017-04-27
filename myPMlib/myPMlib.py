@@ -133,13 +133,13 @@ class myProject:
     def infoHTML(self):
         '''This procedure get back info in form of HTML
         language'''
-        
+
         print('------------------------------------------')
         for task in self.tasks:
             if task.level == 0:
-                task.infoHTML    
+                task.infoHTML
         print('------------------------------------------')
-        
+
     @property
     def info(self):
         '''This procedure print out project info
@@ -185,7 +185,7 @@ class myProject:
 
         if len(tasklist) > 0:
             fig = plt.figure('Gantt Chart')
-            fig.clear()            
+            fig.clear()
             ax = fig.add_subplot(111)
             y_labels = []
             y_width = []
@@ -196,23 +196,23 @@ class myProject:
 
             for index, task in enumerate(tasklist):
                 if task.level <= maxlevel:
-                    # Get Master index 
+                    # Get Master index
                     masterindex = self.getTaskBy_iD(task.iD)
                     # Set up the name
                     y_labels.append('{}: {} [{}]'.format(index, task.name,
-                                                          masterindex))
+                                                         masterindex))
                     # bar lenght on limescale
                     duration = task.duration.days
                     y_width.append(duration)
                     # task beggining on timescale
                     y_left.append(d2n(task.start))
                     y_right.append(d2n(task.start) + duration)
-                    
+
                     if task.level == 0:
                         y_color.append('blue')
                     else:
                         y_color.append('C{}'.format(task.level))
-                        
+
                     time_label.append('{:%d %m %Y}'.format(task.start))
 
             # Adding last tick mark at the end
@@ -221,7 +221,7 @@ class myProject:
             y_width.append(0.1)
             y_left.append(max(y_right))
             y_color.append('black')
-            
+
             y_pos = np.arange(len(y_labels))
 
             ax.barh(y_pos, y_width, left=y_left, color=y_color)
@@ -231,17 +231,17 @@ class myProject:
 
             ax.set_xticks(y_left)
             ax.set_xticklabels(time_label)
-            
-            minorLocator = np.arange(min(y_left),max(y_left),7)
-            
+
+            minorLocator = np.arange(min(y_left), max(y_left), 7)
+
             # Drawing vertical ticks for weeks
             for _x in minorLocator:
                 ax.axvline(x=_x, ls=':', linewidth=1, color='0.6')
-            
+
             # Drawing today line
             today = d2n(dt.datetime.today())
             ax.axvline(x=today, ls='--', linewidth=1, color='red')
-            
+
             labelsx = ax.get_xticklabels()
             plt.setp(labelsx, rotation=45, fontsize=10, ha='right')
 
@@ -250,34 +250,31 @@ class myProject:
 
             plt.tight_layout()
 #           plt.grid()
-            
-            
             plt.show()
         else:
             print('No tasklist')
             return False
 
-    def timeSort(self ,timeline = None):
+    def timeSort(self, timeline=None):
         '''This is procedure to sort task for Gantt chart creation
         it's using order of task in project.tasks list as timeline order
         and sort task as per this'''
-        
+
         if timeline is None:
             timeline = self.timeline
-            
+
         for index, task in enumerate(timeline):
             if index > 0:
                 task.setStart(timeline[index-1].end)
                 task.prevTask = timeline[index-1]
-                
+
                 if task is not timeline[-1]:
                     task.nextTask = timeline[index + 1]
-                
+
                 print('loop na: {}'.format(timeline[index-1].end))
             else:
-                task.nextTask = timeline[index + 1] 
-                
-                
+                task.nextTask = timeline[index + 1]
+
     def getOwner(self, task):
         '''This finction look up for the owner of a task'''
 
@@ -308,14 +305,14 @@ class myProject:
             self.tasks.pop(index)
 
             return True
-    
+
     def chain(self, *arg):
-        '''this function returns a list of task objects based on the 
+        '''this function returns a list of task objects based on the
         global index in project.tasks'''
-        
+
         issue = False
         outList = []
-        
+
         for t in arg:
             try:
                 self.tasks[t].iD
@@ -327,7 +324,7 @@ class myProject:
             return outList
         else:
             return False
-       
+
 
 class teamMember:
     '''This is main class to define a teammemeber'''
@@ -540,25 +537,25 @@ class newTask:
         self.level = 0
         del(self.subTasks)
         self.subTasks = []
-        
+
     def printInfo(self, task):
         '''Main printer for a task'''
 
         index = self.project.getTaskBy_iD(task.iD)
         owner = self.getOwner()
         if owner is not False:
-            owner = owner.nick
+            owner = '\x1b[32m{}\x1b[0m'.format(owner.nick)
         else:
-            owner = 'No owner'
-        
+            owner = '\x1b[31mNo owner\x1b[0m'
+
         prestr = ''
-        
+
         # Making all indexes print out as 4 symbols size
         if len(str(index)) < 4:
             for k in range(4-len(str(index))):
-                prestr +='.'
-                
-        # Adding empty line for level 0 tasks    
+                prestr += '.'
+
+        # Adding empty line for level 0 tasks
         if task.level == 0:
             string = '____\n{}{}| '.format(prestr, index)
             MaxL = 65
@@ -570,31 +567,32 @@ class newTask:
             for x in range(3 * task.level - 1):
                 string += ' '
             string += '\u21B3'
-        
+
         if task in self.project.timeline:
             string += '\x1b[32m[ {} ]\x1b[0m'.format(task.name)
             MaxL = 69
         else:
             string += '[ {} ]'.format(task.name)
-        
+
         for x in range(MaxL - len(string)):
             string += '_'
-        
+
         print(string + '[{} weeks] {}'
-              .format( task.duration.days / 7, owner))
-    
+              .format(task.duration.days / 7, owner))
+
     def printHTML(self, task):
         '''this procedure prepare simple data as html'''
-        
-        string =''
-        
+
+        string = ''
+
         if task.level > 0:
             for x in range(6 * task.level - 1):
                 string += '\x1b[30m.'
             string += '\x1b[0m\u21B3'
-            
-        print('{} \x1b[3{}m{}\x1b[0m'.format(string, int(task.level+1), task.name))
-    
+
+        print('{} \x1b[3{}m{}\x1b[0m'.format(string, int(task.level+1),
+                                             task.name))
+
     @property
     def infoHTML(self):
         '''this procedure set out the html version of info'''
@@ -603,7 +601,7 @@ class newTask:
         if len(self.subTasks) > 0:
             for subtask in self.subTasks:
                 subtask.infoHTML
-    
+
     @property
     def info(self):
         '''printing out the global infor of this task'''
@@ -615,46 +613,48 @@ class newTask:
 
     def setTimeBySub(self):
         '''this procedure set up start and end date form subtasks'''
-        
+
         starts = []
-        ends =[]
-        
+        ends = []
+
         for task in self.subTasks:
             starts.append(task.start)
             ends.append(task.end)
-        
+
         start = min(starts)
         end = max(ends)
-        
+
         self.start = start
         self.end = end
         self.duration = end - start
-        
-        print(start,end)
-        
+
+        print(start, end)
+
     def getOwner(self):
         '''looking for this task owner'''
         for m in self.project.team:
             for t in m.tasks:
                 if t is self:
                     return m
-        return False        
-        
-# Some hard coded definition for developemnt only
-pf = 'projekt.save'
-P = loadObj(pf)
+        return False
 
-#P = myProject('EntellEon', 'Tomek')
-#M = teamMember(P, 'Marcin', 'Pruski')
-#R = teamMember(P, 'Robert', 'Czerner')
-#B = teamMember(P,'Przemysław', 'Fałkowski', 'Buźka')
-#
-#
-#T0 = newTask(P, 'Nowe MCC')
-#T1 = newTask(P, 'Shutters')
-#T2 = newTask(P, 'Shutters main')
-#T3 = newTask(P, 'Shutters cover')
-#
-#T0.addSubTask(T1)
-#T1.addSubTask(T2)
-#T0.addSubTask(T3)
+
+if __name__ == '__main__':
+    # Some hard coded definition for developemnt only
+    pf = 'projekt.save'
+    P = loadObj(pf)
+
+    # P = myProject('EntellEon', 'Tomek')
+    # M = teamMember(P, 'Marcin', 'Pruski')
+    # R = teamMember(P, 'Robert', 'Czerner')
+    # B = teamMember(P,'Przemysław', 'Fałkowski', 'Buźka')
+    #
+    #
+    # T0 = newTask(P, 'Nowe MCC')
+    # T1 = newTask(P, 'Shutters')
+    # T2 = newTask(P, 'Shutters main')
+    # T3 = newTask(P, 'Shutters cover')
+    #
+    # T0.addSubTask(T1)
+    # T1.addSubTask(T2)
+    # T0.addSubTask(T3)
