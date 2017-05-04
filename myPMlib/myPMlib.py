@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates
 import numpy as np
 import datetime as dt
+from matplotlib.backends.backend_pdf import PdfPages
 
 # Some handy aliases
 
@@ -335,6 +336,35 @@ class myProject:
         else:
             print('No tasklist')
             return False
+
+    def saveGantt(self, filename=None):
+        '''This function is about saving the current gant chart'''
+        if filename:
+            try:
+                sFig = plt.figure('Gantt Chart')
+                sFig.savefig(filename, bbox_inches='tight')
+                return True
+            except:
+                return False
+
+    def savePdf(self, filename=None):
+        '''This procedure save multipage PDF as summary gantts for project'''
+        if not filename:
+            filename = 'multipage_pdf.pdf'
+
+        with PdfPages(filename) as pdf:
+            self.gantt()
+            plt.title('{} project Gantt chart'.format(self.name))
+            pFig = plt.figure('Gantt Chart')
+            pdf.savefig(pFig, bbox_inches='tight')
+
+            # and looping thrue all team members
+            for m in range(len(self.team)):
+                self.gantt(self.m(m).tasks)
+                plt.title(self.m(m).fullname)
+                pFig = plt.figure('Gantt Chart')
+                pdf.savefig(pFig, bbox_inches='tight')
+
 
     def timeSort(self, timeline=None):
         '''This is procedure to sort task for Gantt chart creation
