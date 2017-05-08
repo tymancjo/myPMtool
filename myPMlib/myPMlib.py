@@ -14,9 +14,23 @@ import datetime as dt
 from matplotlib.backends.backend_pdf import PdfPages
 
 # Some handy aliases
-
 d2n = matplotlib.dates.date2num
 n2d = matplotlib.dates.num2date
+
+# Some global definitoins
+# Colorscale here:
+# colorsIn = [(175, 231, 179), (186, 242, 159), (197, 252, 140), (201, 216, 136),
+#             (204, 163, 137), (187, 125, 145), (151, 101, 159), (122, 82, 173),
+#             (117, 78, 184), (111, 73, 195)]
+
+colorsIn = [(255, 49, 145), (197, 130, 194), (138, 211, 243), (82, 208, 192),
+            (27, 176, 107), (0, 125, 77), (0, 54, 104), (0, 0, 110),
+            (0, 0, 55), (0, 0, 0)]
+
+colors = []
+for color in colorsIn:
+    colors.append(tuple(x / 255 for x in color))
+del(colorsIn)
 
 
 # Global functions and procedures
@@ -206,15 +220,15 @@ class myProject:
                 return index
         return False
 
-    @property
-    def infoHTML(self):
+    # @property
+    def infoHTML(self, L=None):
         '''This procedure get back info in form of HTML
         language'''
 
         print('------------------------------------------')
         for task in self.tasks:
             if task.level == 0:
-                task.infoHTML
+                task.infoHTML(outL=L)
         print('------------------------------------------')
 
     @property
@@ -253,6 +267,161 @@ class myProject:
             return self.team[iD]
         except:
             return False
+
+    def tasksSummary(self):
+        '''This precedure create the matplotlib of tasks summary'''
+        tempList = []
+        self.infoHTML(L=tempList)
+        self.summaryGraph(tempList[::-1])
+
+    def listTasksSummary(self):
+        '''This precedure create the matplotlib of tasks summary'''
+        tempList = []
+        self.infoHTML(L=tempList)
+        return tempList
+
+
+    def summaryGraph(self, tasklist=None):
+        '''This procedure prepare and display tasks structure graph'''
+
+        def onClick(event):
+            if event.xdata is not None and event.ydata is not None:
+                if int(event.ydata) >= 0 and int(event.ydata) < len(tasklist):
+                    print(tasklist[int(event.ydata + .4)])
+
+        plt.style.use('seaborn-muted')
+
+        if tasklist is None:
+            tasklist = self.tasks
+
+        if len(tasklist) > 0:
+            fig = plt.figure('Summary Plot')
+            fig.set_size_inches(16.53, 11.69)
+            fig.clear()
+
+            ax_t = plt.subplot2grid((4, 5), (0, 0), rowspan=1, colspan=5)
+            ax_r = plt.subplot2grid((4, 5), (1, 1), rowspan=3, colspan=4)
+            ax_l = plt.subplot2grid((4, 5), (1, 0), rowspan=3, colspan=1)
+
+            y_labels = []
+            y_width = []
+            y_left = []
+            y_color = []
+            y_pos = []
+            y_text = []
+            y_totalLenght = []
+            y_start = []
+            y_duration = []
+            y_end = []
+
+            topWBS_y = 0
+            topWBS_yticks = []
+
+            for index, task in enumerate(tasklist):
+                masterindex = self.getTaskBy_iD(task.iD)
+                y_labels.append('[{}] {}'.format(masterindex, task.name))
+                y_width.append(1)
+                y_left.append(task.level * 1)
+                y_color.append(colors[task.level])
+                y_pos.append(index)
+                # y_text.append('[{}]'.format(task.name))
+                # ax_l.text(y_left[-1] + y_width[-1] + 0.1,
+                #           y_pos[-1] - 0.3, y_text[-1])
+                # y_totalLenght.append(len(y_text[-1]) * .5 + task.level * 1)
+                y_start.append(d2n(task.start))
+                y_duration.append(task.duration.days)
+                y_end.append(d2n(task.end))
+
+                # Drawing the tasks rectangle for Tom Main gantt
+                if task.level == 0:
+                    ax_t.barh(topWBS_y, y_duration[-1], left=y_start[-1],
+                              color=random.choice(colors),
+                              edgecolor='black', linewidth=1)
+                    topWBS_y += 1
+                    topWBS_yticks.append('[{}]'.format(task.name))
+
+            # Drawing the main rectangle fro WBS structure
+            ax_l.barh(y_pos, y_width, left=y_left, color=y_color,
+                    edgecolor='black', linewidth=1)
+
+            # Drawing the tasks rectangle for gantt
+            ax_r.barh(y_pos, y_duration, left=y_start, color=y_color,
+                      edgecolor='black', linewidth=1)
+
+            # Set up the ticks on y axes
+            ax_l.yaxis.tick_right()
+            ax_l.set_yticks(y_pos)
+            ax_l.set_yticklabels(y_labels)
+
+            ax_r.set_yticks(y_pos)
+            ax_r.set_yticklabels('')
+
+            ax_t.set_yticks(np.arange(0, topWBS_y, 1))
+            ax_t.set_yticklabels('')
+
+            # ax.invert_yaxis()  # labels read top-to-bottom
+
+            # Turning off plot box lines
+            ax_l.spines["top"].set_visible(False)
+            ax_l.spines["right"].set_visible(False)
+            # ax.spines["bottom"].set_visible(False)
+
+            ax_r.spines["top"].set_visible(False)
+            ax_r.spines["right"].set_visible(False)
+            # ax_r.spines["bottom"].set_visible(False)
+            ax_r.spines["left"].set_visible(False)
+
+            ax_l.set_title('WBS (task structure)')
+            ax_r.set_title('WBS tasks gant chart')
+            ax_t.set_title('Critical path and milestones')
+
+            # Worning on the x ticks for WBS plot
+            xTck = []
+            for val in y_left:
+                if val + .05 not in xTck:
+                    xTck.append(val + .05)
+            # xTck.append(max(y_totalLenght))
+
+            plt.sca(ax_l)
+            plt.xticks(xTck, '', color='red')
+            plt.grid(which='major', alpha=0.25)
+
+
+            # Working on the Gantt chart axes
+            plt.sca(ax_r)
+            plt.xticks(np.arange(min(y_start), max(y_end)+2*7, 7))
+            myFmt = matplotlib.dates.DateFormatter("%d-%m-%Y")
+            ax_r.xaxis.set_major_formatter(myFmt)
+            labelsx = ax_r.get_xticklabels()
+            plt.setp(labelsx, rotation=45, fontsize=10, ha='right')
+            plt.grid(which='major', alpha=0.25)
+
+
+            # Drawing today line
+            today = d2n(dt.datetime.today())
+            ax_r.axvline(x=today, ls='--', linewidth=1, color='red')
+            ax_r.text(today, y_pos[0] - 1, 'TODAY', color='red')
+
+            # Working on the Top Main Gantt chart axes
+            plt.sca(ax_t)
+            plt.xticks(np.arange(min(y_start), max(y_end)+2*7, 7))
+            myFmt = matplotlib.dates.DateFormatter("%m-%Y")
+            ax_t.xaxis.set_major_formatter(myFmt)
+            labelsx = ax_t.get_xticklabels()
+            plt.setp(labelsx, rotation=45, fontsize=10, ha='right')
+            plt.grid(which='major', alpha=0.25)
+
+            # Drawing today line
+            today = d2n(dt.datetime.today())
+            ax_t.axvline(x=today, ls='--', linewidth=1, color='red')
+            ax_t.text(today, y_pos[0], 'TODAY', color='red')
+
+
+            self.cid = fig.canvas.mpl_connect('button_press_event', onClick)
+
+            plt.tight_layout()
+            plt.subplots_adjust(wspace=1.5, hspace=0.5)
+            plt.show()
 
     def gantt(self, tasklist=None, maxlevel=9999, names=True):
         '''This procedure is about to draw simple gantt chart
@@ -293,7 +462,7 @@ class myProject:
                     if task.level == 0:
                         y_color.append('blue')
                     else:
-                        y_color.append('C{}'.format(task.level))
+                        y_color.append(colors[task.level])
 
                     time_label.append('{:%d %m %Y}'.format(task.start))
 
@@ -314,7 +483,7 @@ class myProject:
 
             ax.set_yticks(y_pos)
             ax.set_yticklabels(y_labels)
-#            ax.invert_yaxis()  # labels read top-to-bottom
+            # ax.invert_yaxis()  # labels read top-to-bottom
             plt.xticks(np.arange(min(y_left), max(y_right)+2*7, 7))
             myFmt = matplotlib.dates.DateFormatter("%d-%m-%Y")
             ax.xaxis.set_major_formatter(myFmt)
@@ -353,18 +522,28 @@ class myProject:
             filename = 'multipage_pdf.pdf'
 
         with PdfPages(filename) as pdf:
+            self.tasksSummary()
+
+            plt.title('{} project WBS (Tasks structure)'.format(self.name))
+            pFig = plt.figure('Summary Plot')
+            pFig.set_size_inches(11.69, 16.53)
+            # self.tasksSummary
+            pdf.savefig(pFig, bbox_inches='tight')
             self.gantt()
             plt.title('{} project Gantt chart'.format(self.name))
             pFig = plt.figure('Gantt Chart')
+            pFig.set_size_inches(16.53, 11.69)
+            self.gantt()
             pdf.savefig(pFig, bbox_inches='tight')
 
             # and looping thrue all team members
-            for m in range(len(self.team)):
+            for m in range(1,len(self.team)):
                 self.gantt(self.m(m).tasks)
+                # self.summaryGraph(self.m(m).tasks)
                 plt.title(self.m(m).fullname)
                 pFig = plt.figure('Gantt Chart')
+                # pFig = plt.figure('Summary Plot')
                 pdf.savefig(pFig, bbox_inches='tight')
-
 
     def timeSort(self, timeline=None):
         '''This is procedure to sort task for Gantt chart creation
@@ -709,14 +888,17 @@ class newTask:
         print('{} \x1b[3{}m{}\x1b[0m'.format(string, int(task.level+1),
                                              task.name))
 
-    @property
-    def infoHTML(self):
+    # @property
+    def infoHTML(self, outL=None):
         '''this procedure set out the html version of info'''
         self.printHTML(self)
 
+        if outL is not None:
+            outL.append(self)
+
         if len(self.subTasks) > 0:
             for subtask in self.subTasks:
-                subtask.infoHTML
+                subtask.infoHTML(outL=outL)
 
     @property
     def info(self):
