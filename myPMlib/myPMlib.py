@@ -19,9 +19,6 @@ n2d = matplotlib.dates.num2date
 
 # Some global definitoins
 # Colorscale here:
-# colorsIn = [(175, 231, 179), (186, 242, 159), (197, 252, 140), (201, 216, 136),
-#             (204, 163, 137), (187, 125, 145), (151, 101, 159), (122, 82, 173),
-#             (117, 78, 184), (111, 73, 195)]
 
 colorsIn = [(255, 49, 145), (197, 130, 194), (138, 211, 243), (82, 208, 192),
             (27, 176, 107), (0, 125, 77), (0, 54, 104), (0, 0, 110),
@@ -280,7 +277,6 @@ class myProject:
         self.infoHTML(L=tempList)
         return tempList
 
-
     def summaryGraph(self, tasklist=None, milestones=None):
         '''This procedure prepare and display tasks structure graph'''
 
@@ -309,7 +305,6 @@ class myProject:
             y_color = []
             y_pos = []
             y_text = []
-            y_totalLenght = []
             y_start = []
             y_duration = []
             y_end = []
@@ -574,7 +569,7 @@ class myProject:
             pdf.savefig(pFig, bbox_inches='tight')
 
             # and looping thrue all team members
-            for m in range(1,len(self.team)):
+            for m in range(1, len(self.team)):
                 self.gantt(self.m(m).tasks)
                 # self.summaryGraph(self.m(m).tasks)
                 plt.title(self.m(m).fullname)
