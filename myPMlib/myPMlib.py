@@ -316,6 +316,7 @@ class myProject:
 
             topWBS_y = 0
             topWBS_yticks = []
+            topWBS_timeline = []
 
             for index, task in enumerate(tasklist):
                 masterindex = self.getTaskBy_iD(task.iD)
@@ -324,13 +325,21 @@ class myProject:
                 y_left.append(task.level * 1)
                 y_color.append(colors[task.level])
                 y_pos.append(index)
-                y_text.append('[{}]'.format(task.name))
-                # y_totalLenght.append(len(y_text[-1]) * .5 + task.level * 1)
+                y_text.append('{}'.format(task.name))
                 y_start.append(d2n(task.start))
                 y_duration.append(task.duration.days)
                 y_end.append(d2n(task.end))
 
-                # Drawing the tasks rectangle for Tom Main gantt
+                # Adding names of owners to bottom Gantt chart
+                owner_label = task.getOwner()
+                if owner_label is not False:
+                    # prining the owner nick
+                    ax_r.text(d2n(task.start) + y_duration[-1] + 1, index,
+                              owner_label.nick, color='black',
+                              fontsize=8, verticalalignment='center')
+
+                # Drawing the tasks rectangle for Top Main gantt
+                # if its not delivered by separate milestone list
                 if milestones is None:
                     if task.level == 0:
                         ax_t.barh(topWBS_y, y_duration[-1], left=y_start[-1],
@@ -342,9 +351,31 @@ class myProject:
                         ax_t.text(y_start[-1] + y_duration[-1] + 0.1,
                                   topWBS_y - 1.2, y_text[-1])
 
+            # Plotting milestones if delivered by separate list
+            if milestones is not None:
+                for mstone in milestones:
+                    ax_t.barh(topWBS_y, mstone.duration.days,
+                              left=d2n(mstone.start),
+                              color=random.choice(colors),
+                              edgecolor='black', linewidth=1)
+                    topWBS_y += 1
+
+                    if d2n(mstone.start) +\
+                       mstone.duration.days not in topWBS_timeline:
+                        topWBS_timeline.append(d2n(mstone.start)
+                                               + mstone.duration.days)
+
+                    if d2n(mstone.start) not in topWBS_timeline:
+                        topWBS_timeline.append(d2n(mstone.start))
+
+                    ax_t.text(d2n(mstone.start) + mstone.duration.days + 0.1,
+                              topWBS_y - 1.3, '{}'.format(mstone.name))
+                # Adding extra space at end of timeline
+                topWBS_timeline.append(max(topWBS_timeline) + 14)
+
             # Drawing the main rectangle fro WBS structure
             ax_l.barh(y_pos, y_width, left=y_left, color=y_color,
-                    edgecolor='black', linewidth=1)
+                      edgecolor='black', linewidth=1)
 
             # Drawing the tasks rectangle for gantt
             ax_r.barh(y_pos, y_duration, left=y_start, color=y_color,
@@ -375,7 +406,7 @@ class myProject:
 
             ax_l.set_title('WBS (task structure)')
             ax_r.set_title('WBS tasks gant chart')
-            ax_t.set_title('Critical path and milestones')
+            ax_t.set_title('Milestones & Critical path')
 
             # Worning on the x ticks for WBS plot
             xTck = []
@@ -400,12 +431,18 @@ class myProject:
             # Drawing today line
             today = d2n(dt.datetime.today())
             ax_r.axvline(x=today, ls='--', linewidth=1, color='red')
-            ax_r.text(today, y_pos[0] - 1, 'TODAY', color='red')
+            ax_r.text(today, y_pos[0] - 2, 'TODAY', color='red')
 
             # Working on the Top Main Gantt chart axes
             plt.sca(ax_t)
-            plt.xticks(np.arange(min(y_start), max(y_end)+2*7, 7))
-            myFmt = matplotlib.dates.DateFormatter("%m-%Y")
+
+            if milestones is None:
+                plt.xticks(np.arange(min(y_start), max(y_end)+2*7, 7))
+            else:
+                ax_t.set_xlim([min(topWBS_timeline), max(topWBS_timeline)])
+                plt.xticks(topWBS_timeline)
+
+            myFmt = matplotlib.dates.DateFormatter("%m-%y")
             ax_t.xaxis.set_major_formatter(myFmt)
             labelsx = ax_t.get_xticklabels()
             plt.setp(labelsx, rotation=45, fontsize=10, ha='right')
