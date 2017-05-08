@@ -420,7 +420,7 @@ class myProject:
             self.cid = fig.canvas.mpl_connect('button_press_event', onClick)
 
             plt.tight_layout()
-            plt.subplots_adjust(wspace=1.5, hspace=0.5)
+            plt.subplots_adjust(wspace=2, hspace=0.5)
             plt.show()
 
     def gantt(self, tasklist=None, maxlevel=9999, names=True):
