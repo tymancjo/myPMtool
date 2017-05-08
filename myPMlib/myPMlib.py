@@ -281,7 +281,7 @@ class myProject:
         return tempList
 
 
-    def summaryGraph(self, tasklist=None):
+    def summaryGraph(self, tasklist=None, milestones=None):
         '''This procedure prepare and display tasks structure graph'''
 
         def onClick(event):
@@ -296,7 +296,7 @@ class myProject:
 
         if len(tasklist) > 0:
             fig = plt.figure('Summary Plot')
-            fig.set_size_inches(16.53, 11.69)
+            fig.set_size_inches(22, 12)
             fig.clear()
 
             ax_t = plt.subplot2grid((4, 5), (0, 0), rowspan=1, colspan=5)
@@ -319,26 +319,28 @@ class myProject:
 
             for index, task in enumerate(tasklist):
                 masterindex = self.getTaskBy_iD(task.iD)
-                y_labels.append('[{}] {}'.format(masterindex, task.name))
+                y_labels.append('[{}]'.format(masterindex))
                 y_width.append(1)
                 y_left.append(task.level * 1)
                 y_color.append(colors[task.level])
                 y_pos.append(index)
-                # y_text.append('[{}]'.format(task.name))
-                # ax_l.text(y_left[-1] + y_width[-1] + 0.1,
-                #           y_pos[-1] - 0.3, y_text[-1])
+                y_text.append('[{}]'.format(task.name))
                 # y_totalLenght.append(len(y_text[-1]) * .5 + task.level * 1)
                 y_start.append(d2n(task.start))
                 y_duration.append(task.duration.days)
                 y_end.append(d2n(task.end))
 
                 # Drawing the tasks rectangle for Tom Main gantt
-                if task.level == 0:
-                    ax_t.barh(topWBS_y, y_duration[-1], left=y_start[-1],
-                              color=random.choice(colors),
-                              edgecolor='black', linewidth=1)
-                    topWBS_y += 1
-                    topWBS_yticks.append('[{}]'.format(task.name))
+                if milestones is None:
+                    if task.level == 0:
+                        ax_t.barh(topWBS_y, y_duration[-1], left=y_start[-1],
+                                  color=random.choice(colors),
+                                  edgecolor='black', linewidth=1)
+                        topWBS_y += 1
+                        topWBS_yticks.append('[{}]'.format(task.name))
+
+                        ax_t.text(y_start[-1] + y_duration[-1] + 0.1,
+                                  topWBS_y - 1.2, y_text[-1])
 
             # Drawing the main rectangle fro WBS structure
             ax_l.barh(y_pos, y_width, left=y_left, color=y_color,
@@ -354,7 +356,7 @@ class myProject:
             ax_l.set_yticklabels(y_labels)
 
             ax_r.set_yticks(y_pos)
-            ax_r.set_yticklabels('')
+            ax_r.set_yticklabels(y_text)
 
             ax_t.set_yticks(np.arange(0, topWBS_y, 1))
             ax_t.set_yticklabels('')
@@ -386,7 +388,6 @@ class myProject:
             plt.xticks(xTck, '', color='red')
             plt.grid(which='major', alpha=0.25)
 
-
             # Working on the Gantt chart axes
             plt.sca(ax_r)
             plt.xticks(np.arange(min(y_start), max(y_end)+2*7, 7))
@@ -395,7 +396,6 @@ class myProject:
             labelsx = ax_r.get_xticklabels()
             plt.setp(labelsx, rotation=45, fontsize=10, ha='right')
             plt.grid(which='major', alpha=0.25)
-
 
             # Drawing today line
             today = d2n(dt.datetime.today())
@@ -414,13 +414,13 @@ class myProject:
             # Drawing today line
             today = d2n(dt.datetime.today())
             ax_t.axvline(x=today, ls='--', linewidth=1, color='red')
-            ax_t.text(today, y_pos[0], 'TODAY', color='red')
+            ax_t.text(today, topWBS_y + 0.5, 'TODAY', color='red')
 
-
-            self.cid = fig.canvas.mpl_connect('button_press_event', onClick)
+            # Interactivity
+            # self.cid = fig.canvas.mpl_connect('button_press_event', onClick)
 
             plt.tight_layout()
-            plt.subplots_adjust(wspace=2, hspace=0.5)
+            plt.subplots_adjust(wspace=3, hspace=0.5)
             plt.show()
 
     def gantt(self, tasklist=None, maxlevel=9999, names=True):
