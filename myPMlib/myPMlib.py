@@ -269,13 +269,94 @@ class myProject:
         '''This precedure create the matplotlib of tasks summary'''
         tempList = []
         self.infoHTML(L=tempList)
-        self.summaryGraph(tempList[::-1])
+        self.summaryGraph(tempList[::-1], self.milestones)
 
     def listTasksSummary(self):
         '''This precedure create the matplotlib of tasks summary'''
         tempList = []
         self.infoHTML(L=tempList)
         return tempList
+    
+    def wbs(self, tasklist=None):
+        '''This procedure printsout the WBS strycture in plt plot'''
+        plt.style.use('seaborn-muted')
+
+        if tasklist is None:
+            tasklist = []
+            self.infoHTML(tasklist)
+        
+        # Figuring out the max level depth - to make the lines wider :)
+        levels = []
+        for t in tasklist:
+            levels.append(t.level)
+        maxLevel = max(levels)+1
+        del(levels)
+        
+        if len(tasklist) > 0:
+            fig = plt.figure('WBS Plot')
+            # fig.set_size_inches(22, 12)
+            fig.clear()
+
+            ax_t = plt.subplot2grid((1, 1), (0, 0), rowspan=1, colspan=1)
+            
+            y_labels = []
+            y_width = []
+            y_left = []
+            y_color = []
+            y_pos = []
+            y_text = []
+            y_start = []
+            y_duration = []
+            y_end = []
+
+            for index, task in enumerate(tasklist):
+                masterindex = self.getTaskBy_iD(task.iD)
+                y_labels.append('[{}]{}'.format(masterindex, task.name))
+                y_width.append(maxLevel - task.level)
+                y_left.append(task.level * 1)
+                
+                if task.done:
+                    y_color.append('green')
+                else:
+                    y_color.append(colors[task.level])
+                
+                y_pos.append(index)
+                y_text.append('{}'.format(task.name))
+                y_start.append(d2n(task.start))
+                y_duration.append(task.duration.days)
+                y_end.append(d2n(task.end))
+
+                # Adding names of owners to bottom Gantt chart
+                owner_label = task.getOwner()
+                if owner_label is not False:
+                    # prining the owner nick
+                    ax_t.text(d2n(task.start) + y_duration[-1] + 1, index,
+                              owner_label.nick, color='black',
+                              fontsize=8, verticalalignment='center')
+            
+
+            # Drawing the main rectangle fro WBS structure
+            ax_t.barh(y_pos, y_width, left=y_left, color=y_color,
+                      edgecolor='black', linewidth=1)
+
+
+            # Set up the ticks on y axes
+            ax_t.yaxis.tick_right()
+            ax_t.set_yticks(y_pos)
+            ax_t.set_yticklabels(y_labels)
+
+            ax_t.invert_yaxis()  # labels read top-to-bottom
+
+            plt.sca(ax_t)
+#            plt.xticks(xTck, '', color='red')
+            plt.grid(which='major', alpha=0.25)
+
+            # Interactivity
+            # self.cid = fig.canvas.mpl_connect('button_press_event', onClick)
+
+            plt.tight_layout()
+            plt.show()
+
 
     def summaryGraph(self, tasklist=None, milestones=None):
         '''This procedure prepare and display tasks structure graph'''
@@ -292,7 +373,7 @@ class myProject:
 
         if len(tasklist) > 0:
             fig = plt.figure('Summary Plot')
-            fig.set_size_inches(22, 12)
+            # fig.set_size_inches(22, 12)
             fig.clear()
 
             ax_t = plt.subplot2grid((4, 5), (0, 0), rowspan=1, colspan=5)
@@ -318,7 +399,12 @@ class myProject:
                 y_labels.append('[{}]'.format(masterindex))
                 y_width.append(1)
                 y_left.append(task.level * 1)
-                y_color.append(colors[task.level])
+                
+                if task.done:
+                    y_color.append('green')
+                else:
+                    y_color.append(colors[task.level])
+                
                 y_pos.append(index)
                 y_text.append('{}'.format(task.name))
                 y_start.append(d2n(task.start))
@@ -329,9 +415,8 @@ class myProject:
                 owner_label = task.getOwner()
                 if owner_label is not False:
                     # prining the owner nick
-                    ax_r.text(d2n(task.start) + y_duration[-1] + 1, index,
-                              owner_label.nick, color='black',
-                              fontsize=8, verticalalignment='center')
+                    ax_r.text(d2n(task.start) + y_duration[-1] + 1, index - .5,
+                              owner_label.nick, color='black')
 
                 # Drawing the tasks rectangle for Top Main gantt
                 # if its not delivered by separate milestone list
@@ -420,7 +505,7 @@ class myProject:
             myFmt = matplotlib.dates.DateFormatter("%d-%m-%Y")
             ax_r.xaxis.set_major_formatter(myFmt)
             labelsx = ax_r.get_xticklabels()
-            plt.setp(labelsx, rotation=45, fontsize=10, ha='right')
+            plt.setp(labelsx, rotation=45, fontsize=6, ha='right')
             plt.grid(which='major', alpha=0.25)
 
             # Drawing today line
@@ -437,10 +522,10 @@ class myProject:
                 ax_t.set_xlim([min(topWBS_timeline), max(topWBS_timeline)])
                 plt.xticks(topWBS_timeline)
 
-            myFmt = matplotlib.dates.DateFormatter("%m-%y")
+            myFmt = matplotlib.dates.DateFormatter("%d-%m-%y")
             ax_t.xaxis.set_major_formatter(myFmt)
             labelsx = ax_t.get_xticklabels()
-            plt.setp(labelsx, rotation=45, fontsize=10, ha='right')
+            plt.setp(labelsx, rotation=45, fontsize=6, ha='right')
             plt.grid(which='major', alpha=0.25)
 
             # Drawing today line
@@ -491,7 +576,10 @@ class myProject:
                     y_left.append(d2n(task.start))
                     y_right.append(d2n(task.start) + duration)
 
-                    if task.level == 0:
+                    if task.done:
+                        y_color.append('green')
+                    
+                    elif task.level == 0:
                         y_color.append('blue')
                     else:
                         y_color.append(colors[task.level])
@@ -721,6 +809,20 @@ class teamMember:
                         self.tasks.pop(i)
                         return True
 
+    def infoHTML(self, L=None):
+            '''This procedure get back info in form of HTML
+            language'''
+            
+            if L is None:
+                L = []
+            
+            print('------------------------------------------')
+            for task in self.tasks:
+                if task.level == 0:
+                    task.infoHTML(outL=L)
+            print('------------------------------------------')
+            return L
+            
     @property
     def info(self):
         '''This procedure print out team member info'''
@@ -768,6 +870,7 @@ class newTask:
         # Cointainer for sub tasks (to make structure)
         self.subTasks = []
         self.parentiD = None
+        self.done = False
 
     def __str__(self):
         '''This define the aswer to string reqiuest'''
@@ -795,6 +898,13 @@ class newTask:
         print('Start date set as: {}'.format(self.start))
 
         self.end = self.start + self.duration
+
+    def setEnd(self, time):
+        '''This procedure set up the start time of the task'''
+        self.end = time
+        print('End date set as: {}'.format(self.start))
+
+        self.start = self.end - self.duration
 
     def addSubTask(self, subtask):
         '''adding task to self subtasks'''
