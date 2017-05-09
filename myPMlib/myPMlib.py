@@ -1090,21 +1090,4 @@ class newTask:
 
 
 if __name__ == '__main__':
-    # Some hard coded definition for developemnt only
-    pf = 'projekt.save'
-    P = loadObj(pf)
-
-    # P = myProject('EntellEon', 'Tomek')
-    # M = teamMember(P, 'Marcin', 'Pruski')
-    # R = teamMember(P, 'Robert', 'Czerner')
-    # B = teamMember(P,'Przemysław', 'Fałkowski', 'Buźka')
-    #
-    #
-    # T0 = newTask(P, 'Nowe MCC')
-    # T1 = newTask(P, 'Shutters')
-    # T2 = newTask(P, 'Shutters main')
-    # T3 = newTask(P, 'Shutters cover')
-    #
-    # T0.addSubTask(T1)
-    # T1.addSubTask(T2)
-    # T0.addSubTask(T3)
+    print('This is a myPM library. Info: https://github.com/tymancjo/myPMtool')
