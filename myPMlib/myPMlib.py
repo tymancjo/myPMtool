@@ -276,7 +276,7 @@ class myProject:
         tempList = []
         self.infoHTML(L=tempList)
         return tempList
-    
+
     def wbs(self, tasklist=None):
         '''This procedure printsout the WBS strycture in plt plot'''
         plt.style.use('seaborn-muted')
@@ -284,21 +284,21 @@ class myProject:
         if tasklist is None:
             tasklist = []
             self.infoHTML(tasklist)
-        
+
         # Figuring out the max level depth - to make the lines wider :)
         levels = []
         for t in tasklist:
             levels.append(t.level)
         maxLevel = max(levels)+1
         del(levels)
-        
+
         if len(tasklist) > 0:
             fig = plt.figure('WBS Plot')
             # fig.set_size_inches(22, 12)
             fig.clear()
 
             ax_t = plt.subplot2grid((1, 1), (0, 0), rowspan=1, colspan=1)
-            
+
             y_labels = []
             y_width = []
             y_left = []
@@ -314,12 +314,12 @@ class myProject:
                 y_labels.append('[{}]{}'.format(masterindex, task.name))
                 y_width.append(maxLevel - task.level)
                 y_left.append(task.level * 1)
-                
+
                 if task.done:
                     y_color.append('green')
                 else:
                     y_color.append(colors[task.level])
-                
+
                 y_pos.append(index)
                 y_text.append('{}'.format(task.name))
                 y_start.append(d2n(task.start))
@@ -333,7 +333,7 @@ class myProject:
                     ax_t.text(d2n(task.start) + y_duration[-1] + 1, index,
                               owner_label.nick, color='black',
                               fontsize=8, verticalalignment='center')
-            
+
 
             # Drawing the main rectangle fro WBS structure
             ax_t.barh(y_pos, y_width, left=y_left, color=y_color,
@@ -399,12 +399,12 @@ class myProject:
                 y_labels.append('[{}]'.format(masterindex))
                 y_width.append(1)
                 y_left.append(task.level * 1)
-                
+
                 if task.done:
                     y_color.append('green')
                 else:
                     y_color.append(colors[task.level])
-                
+
                 y_pos.append(index)
                 y_text.append('{}'.format(task.name))
                 y_start.append(d2n(task.start))
@@ -578,7 +578,7 @@ class myProject:
 
                     if task.done:
                         y_color.append('green')
-                    
+
                     elif task.level == 0:
                         y_color.append('blue')
                     else:
@@ -711,9 +711,19 @@ class myProject:
             else:
                 owner.remTask(task)
 
-            index = self.getTaskBy_iD(task.iD)
-            self.tasks.pop(index)
-
+            # Going thrue all myProject variables and check if itm is
+            # list with deleted task in it.
+            # To make sure we delete the task from all timelines and similar
+            for objVar in vars(self):
+                try:
+                    if task in vars(self)[objVar]:
+                        for index, value in enumerate(vars(self)[objVar]):
+                            if value is task:
+                                print('Removing from position [{}] in {}'.
+                                      format(index, objVar))
+                                vars(self)[objVar].pop(index)
+                except:
+                    pass
             return True
 
     def chain(self, *arg):
@@ -812,17 +822,17 @@ class teamMember:
     def infoHTML(self, L=None):
             '''This procedure get back info in form of HTML
             language'''
-            
+
             if L is None:
                 L = []
-            
+
             print('------------------------------------------')
             for task in self.tasks:
                 if task.level == 0:
                     task.infoHTML(outL=L)
             print('------------------------------------------')
             return L
-            
+
     @property
     def info(self):
         '''This procedure print out team member info'''
