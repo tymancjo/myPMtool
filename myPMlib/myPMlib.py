@@ -358,7 +358,8 @@ class myProject:
             plt.show()
 
 
-    def gt(self, milestones, ax=None,  y_scale=None, y_labels=None):
+    def gt(self, milestones, ax=None, x_scale=None,  y_scale=None,
+           y_labels=None, text=None, clrs=None):
         '''This is a procesdure to display the gantt chart
         its designed to work in a way that it will operate on the pointed
         matplotlib element whis allows to use it as single window or as
@@ -373,6 +374,8 @@ class myProject:
         ax - (optional) axis of matplotlib figure where to draw the plot
             if not specified - new plot window will be created
 
+        x_scale - (optional) the scale for timeline axis (x)
+
         y_scale - (optional) list of posotion for particular tasks on y axis
             if not defined each task willhave it own line with the order from
             the milestones list. If you want to have all task on one y position
@@ -380,11 +383,17 @@ class myProject:
             milestones lenght (i.e.: y_scale = [1] * len(milestones) )
 
         y_labels - (optional) list of labels for each y axis position
+
+        text - (optional) the text to be placed at the end of the stak bar
+                if not set as a list then it will be task name
+
+        clrs - colors (optional) the list of colors for each task. If not set color
+            from list will be choosen by tasks level
         '''
 
         # Ceckinf if plot axis object is delivered and if not creating new
         if ax is None:
-            fig = plt.figure('{} Milestones'.format(self.name))
+            fig = plt.figure('{} Timeline'.format(self.name))
             fig.clear()
             ax = plt.subplot(111)
 
@@ -412,9 +421,15 @@ class myProject:
 
                 topWBS_y = y_scale[index]
 
+                try:
+                    color = clrs[index]
+                except:
+                    color = colors[mstone.level]
+
+
                 ax.barh(topWBS_y, mstone.duration.days,
                           left=d2n(mstone.start),
-                          color=random.choice(colors),
+                          color=color,
                           edgecolor='black', linewidth=1)
 
                 # preparing the timeline x axis marks
@@ -423,9 +438,13 @@ class myProject:
 
                 if d2n(mstone.start) not in topWBS_timeline:
                     topWBS_timeline.append(d2n(mstone.start))
+                try:
+                    tx = text[index]
+                except:
+                    tx = mstone.name
 
                 ax.text(d2n(mstone.end) + 0.1,
-                          topWBS_y - .4, '{}'.format(mstone.name))
+                          topWBS_y - .4, '{}'.format(tx))
 
             # Adding extra space at end of timeline
             topWBS_timeline.append(max(topWBS_timeline) + 7)
@@ -436,12 +455,28 @@ class myProject:
                 ax.set_yticklabels(y_labels)
 
             # Formatting time (x) axis and labels
-            ax.set_xticks(topWBS_timeline)
+            if x_scale is None:
+                ax.set_xticks(topWBS_timeline)
+            elif x_scale == 'w' or x_scale == 'weeks':
+                # Drawing a week based timeline marks
+                x_scale = np.arange(min(topWBS_timeline),
+                                    max(topWBS_timeline)+14, 7)
+                ax.set_xticks(x_scale)
+            else:
+                # Using the external delivered list for time marks
+                ax.set_xticks(x_scale)
+
             myFmt = matplotlib.dates.DateFormatter("%d-%m-%y")
             ax.xaxis.set_major_formatter(myFmt)
             labelsx = ax.get_xticklabels()
             plt.setp(labelsx, rotation=45, fontsize=6, ha='right')
-            plt.grid(which='major', alpha=0.25)
+            ax.grid(which='major', alpha=0.25)
+
+            # Drawing today line
+            today = d2n(dt.datetime.today())
+            ax.axvline(x=today, ls='--', linewidth=1, color='red')
+            # Leaved here in case the today txt is needed next to line
+            # ax.text(today, topWBS_y + 0.5, 'TODAY', color='red')
 
             return True
         else:
@@ -502,54 +537,8 @@ class myProject:
                 y_duration.append(task.duration.days)
                 y_end.append(d2n(task.end))
 
-                # Adding names of owners to bottom Gantt chart
-                owner_label = task.getOwner()
-                if owner_label is not False:
-                    # prining the owner nick
-                    ax_r.text(d2n(task.start) + y_duration[-1] + 1, index - .5,
-                              owner_label.nick, color='black')
-
-                # Drawing the tasks rectangle for Top Main gantt
-                # if its not delivered by separate milestone list
-                if milestones is None:
-                    if task.level == 0:
-                        ax_t.barh(topWBS_y, y_duration[-1], left=y_start[-1],
-                                  color=random.choice(colors),
-                                  edgecolor='black', linewidth=1)
-                        topWBS_y += 1
-                        topWBS_yticks.append('[{}]'.format(task.name))
-
-                        ax_t.text(y_start[-1] + y_duration[-1] + 0.1,
-                                  topWBS_y - 1.2, y_text[-1])
-
-            # Plotting milestones if delivered by separate list
-            if milestones is not None:
-                for mstone in milestones:
-                    ax_t.barh(topWBS_y, mstone.duration.days,
-                              left=d2n(mstone.start),
-                              color=random.choice(colors),
-                              edgecolor='black', linewidth=1)
-                    topWBS_y += 1
-
-                    if d2n(mstone.start) +\
-                       mstone.duration.days not in topWBS_timeline:
-                        topWBS_timeline.append(d2n(mstone.start)
-                                               + mstone.duration.days)
-
-                    if d2n(mstone.start) not in topWBS_timeline:
-                        topWBS_timeline.append(d2n(mstone.start))
-
-                    ax_t.text(d2n(mstone.start) + mstone.duration.days + 0.1,
-                              topWBS_y - 1.3, '{}'.format(mstone.name))
-                # Adding extra space at end of timeline
-                topWBS_timeline.append(max(topWBS_timeline) + 14)
-
             # Drawing the main rectangle fro WBS structure
             ax_l.barh(y_pos, y_width, left=y_left, color=y_color,
-                      edgecolor='black', linewidth=1)
-
-            # Drawing the tasks rectangle for gantt
-            ax_r.barh(y_pos, y_duration, left=y_start, color=y_color,
                       edgecolor='black', linewidth=1)
 
             # Set up the ticks on y axes
@@ -557,13 +546,36 @@ class myProject:
             ax_l.set_yticks(y_pos)
             ax_l.set_yticklabels(y_labels)
 
-            ax_r.set_yticks(y_pos)
-            ax_r.set_yticklabels(y_text)
+            # Worning on the x ticks for WBS plot
+            xTck = []
+            for val in y_left:
+                if val + .05 not in xTck:
+                    xTck.append(val + .05)
 
-            ax_t.set_yticks(np.arange(0, topWBS_y, 1))
-            ax_t.set_yticklabels('')
+            plt.sca(ax_l)
+            plt.xticks(xTck, '', color='red')
+            plt.grid(which='major', alpha=0.25)
 
-            # ax.invert_yaxis()  # labels read top-to-bottom
+            # Plotting milestones if delivered by separate list
+            if milestones is not None:
+                self.gt(milestones=milestones, ax=ax_t, y_labels=None)
+            else:
+                milestones = [t for t in tasklist if t.level ==0]
+                self.gt(milestones=milestones, ax=ax_t, y_labels=None)
+
+            # Drawing the t bottom right gantt
+            names = [t.name for t in tasklist]
+            text = [t.getOwnerName() for t in tasklist]
+            col = [colors[t.level] for t in tasklist]
+
+            for i, x in enumerate(tasklist):
+                if x.done:
+                    col[i] = 'green'
+
+            self.gt(milestones=tasklist, x_scale='w', ax=ax_r, y_labels=names, text=text,
+                    clrs=col)
+
+
 
             # Turning off plot box lines
             ax_l.spines["top"].set_visible(False)
@@ -579,50 +591,8 @@ class myProject:
             ax_r.set_title('WBS tasks gant chart')
             ax_t.set_title('Milestones & Critical path')
 
-            # Worning on the x ticks for WBS plot
-            xTck = []
-            for val in y_left:
-                if val + .05 not in xTck:
-                    xTck.append(val + .05)
-            # xTck.append(max(y_totalLenght))
 
-            plt.sca(ax_l)
-            plt.xticks(xTck, '', color='red')
-            plt.grid(which='major', alpha=0.25)
 
-            # Working on the Gantt chart axes
-            plt.sca(ax_r)
-            plt.xticks(np.arange(min(y_start), max(y_end)+2*7, 7))
-            myFmt = matplotlib.dates.DateFormatter("%d-%m-%Y")
-            ax_r.xaxis.set_major_formatter(myFmt)
-            labelsx = ax_r.get_xticklabels()
-            plt.setp(labelsx, rotation=45, fontsize=6, ha='right')
-            plt.grid(which='major', alpha=0.25)
-
-            # Drawing today line
-            today = d2n(dt.datetime.today())
-            ax_r.axvline(x=today, ls='--', linewidth=1, color='red')
-            ax_r.text(today, y_pos[0] - 2, 'TODAY', color='red')
-
-            # Working on the Top Main Gantt chart axes
-            plt.sca(ax_t)
-
-            if milestones is None:
-                plt.xticks(np.arange(min(y_start), max(y_end)+2*7, 7))
-            else:
-                ax_t.set_xlim([min(topWBS_timeline), max(topWBS_timeline)])
-                plt.xticks(topWBS_timeline)
-
-            myFmt = matplotlib.dates.DateFormatter("%d-%m-%y")
-            ax_t.xaxis.set_major_formatter(myFmt)
-            labelsx = ax_t.get_xticklabels()
-            plt.setp(labelsx, rotation=45, fontsize=6, ha='right')
-            plt.grid(which='major', alpha=0.25)
-
-            # Drawing today line
-            today = d2n(dt.datetime.today())
-            ax_t.axvline(x=today, ls='--', linewidth=1, color='red')
-            ax_t.text(today, topWBS_y + 0.5, 'TODAY', color='red')
 
             # Interactivity
             # self.cid = fig.canvas.mpl_connect('button_press_event', onClick)
@@ -784,6 +754,15 @@ class myProject:
                 if memberTask is task:
                     return member
         return False
+
+    def getOwnerName(self, task):
+        '''This finction look up for the owner of a task'''
+
+        for member in self.team:
+            for memberTask in member.tasks:
+                if memberTask is task:
+                    return member.nick
+        return ''
 
     def delTask(self, task):
         '''This function delete the task from completly
@@ -1179,6 +1158,13 @@ class newTask:
                     return m
         return False
 
+    def getOwnerName(self):
+        '''looking for this task owner'''
+        for m in self.project.team:
+            for t in m.tasks:
+                if t is self:
+                    return m.nick
+        return ''
 
 if __name__ == '__main__':
     # Some hard coded definition for developemnt only
