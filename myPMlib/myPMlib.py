@@ -358,6 +358,97 @@ class myProject:
             plt.show()
 
 
+    def gt(self, milestones, ax=None,  y_scale=None, y_labels=None):
+        '''This is a procesdure to display the gantt chart
+        its designed to work in a way that it will operate on the pointed
+        matplotlib element whis allows to use it as single window or as
+        subplot of more complex set.
+
+        gt stands for Gantt Chart
+
+        Inputs:
+
+        milestones - list of objects (of newTask class) to beplaced on graph
+
+        ax - (optional) axis of matplotlib figure where to draw the plot
+            if not specified - new plot window will be created
+
+        y_scale - (optional) list of posotion for particular tasks on y axis
+            if not defined each task willhave it own line with the order from
+            the milestones list. If you want to have all task on one y position
+            deliver the list of y_scale = [1,1,1,1,1,...] with lenght as
+            milestones lenght (i.e.: y_scale = [1] * len(milestones) )
+
+        y_labels - (optional) list of labels for each y axis position
+        '''
+
+        # Ceckinf if plot axis object is delivered and if not creating new
+        if ax is None:
+            fig = plt.figure('{} Milestones'.format(self.name))
+            fig.clear()
+            ax = plt.subplot(111)
+
+        # Determining how the y_scale is delivered
+        if y_scale is None:
+            # in such case the Y sace will be just base on numbers of elements
+            y_scale = range(len(milestones))
+        else:
+            try:
+                # checking if the y position list have info for all
+                # elements in milestones ()
+                if len(y_scale) == len(milestones):
+                    pass
+                else:
+                    y_scale = range(len(milestones))
+            except:
+                y_scale = range(len(milestones))
+
+        # Plotting milestones if delivered by milestones
+        if len(milestones) > 0:
+            # some variables preparation
+            topWBS_timeline = []
+
+            for index, mstone in enumerate(milestones):
+
+                topWBS_y = y_scale[index]
+
+                ax.barh(topWBS_y, mstone.duration.days,
+                          left=d2n(mstone.start),
+                          color=random.choice(colors),
+                          edgecolor='black', linewidth=1)
+
+                # preparing the timeline x axis marks
+                if d2n(mstone.end) not in topWBS_timeline:
+                    topWBS_timeline.append(d2n(mstone.end))
+
+                if d2n(mstone.start) not in topWBS_timeline:
+                    topWBS_timeline.append(d2n(mstone.start))
+
+                ax.text(d2n(mstone.end) + 0.1,
+                          topWBS_y - .4, '{}'.format(mstone.name))
+
+            # Adding extra space at end of timeline
+            topWBS_timeline.append(max(topWBS_timeline) + 7)
+
+            # fixing the y scale an labels
+            ax.set_yticks(y_scale)
+            if y_labels is not None:
+                ax.set_yticklabels(y_labels)
+
+            # Formatting time (x) axis and labels
+            ax.set_xticks(topWBS_timeline)
+            myFmt = matplotlib.dates.DateFormatter("%d-%m-%y")
+            ax.xaxis.set_major_formatter(myFmt)
+            labelsx = ax.get_xticklabels()
+            plt.setp(labelsx, rotation=45, fontsize=6, ha='right')
+            plt.grid(which='major', alpha=0.25)
+
+            return True
+        else:
+            print('No milestone list delivered')
+            return False
+
+
     def summaryGraph(self, tasklist=None, milestones=None):
         '''This procedure prepare and display tasks structure graph'''
 
@@ -1093,18 +1184,3 @@ if __name__ == '__main__':
     # Some hard coded definition for developemnt only
     pf = 'projekt.save'
     P = loadObj(pf)
-
-    # P = myProject('EntellEon', 'Tomek')
-    # M = teamMember(P, 'Marcin', 'Pruski')
-    # R = teamMember(P, 'Robert', 'Czerner')
-    # B = teamMember(P,'Przemysław', 'Fałkowski', 'Buźka')
-    #
-    #
-    # T0 = newTask(P, 'Nowe MCC')
-    # T1 = newTask(P, 'Shutters')
-    # T2 = newTask(P, 'Shutters main')
-    # T3 = newTask(P, 'Shutters cover')
-    #
-    # T0.addSubTask(T1)
-    # T1.addSubTask(T2)
-    # T0.addSubTask(T3)

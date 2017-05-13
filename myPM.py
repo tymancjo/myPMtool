@@ -5,6 +5,6 @@ import matplotlib
 
 if __name__ == '__main__':
     # Some hard coded definition for developemnt only
-    pf = 'projekt.save'
+    pf = 'sample.save'
     P = loadObj(pf)
     matplotlib.rcParams.update({'font.size': 6})
