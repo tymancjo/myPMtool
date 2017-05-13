@@ -965,7 +965,9 @@ class newTask:
     def getDuration(self):
         '''This function calculate the duration of
         the task based on sub tasks'''
-        pass
+        self.duration = self.end - self.saart
+        print (self.duration.days())
+        
 
     def setDuration(self, wks):
         '''this set up the duration of the task'''
