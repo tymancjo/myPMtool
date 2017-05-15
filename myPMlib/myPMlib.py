@@ -12,6 +12,8 @@ import matplotlib.dates
 import numpy as np
 import datetime as dt
 from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib import colors as mcolors
+import six
 
 # Some handy aliases
 d2n = matplotlib.dates.date2num
@@ -19,17 +21,32 @@ n2d = matplotlib.dates.num2date
 
 # Some global definitoins
 # Colorscale here:
+colors_ = list(six.iteritems(mcolors.cnames))
 
-colorsIn = [(255, 49, 145), (197, 130, 194), (138, 211, 243), (82, 208, 192),
-            (27, 176, 107), (0, 125, 77), (0, 54, 104), (0, 0, 110),
-            (0, 0, 55), (0, 0, 0)]
+# Add the single letter colors.
+for name, rgb in six.iteritems(mcolors.ColorConverter.colors):
+    hex_ = mcolors.rgb2hex(rgb)
+    colors_.append((name, hex_))
 
-colors = []
-for color in colorsIn:
-    colors.append(tuple(x / 255 for x in color))
-del(colorsIn)
+# Transform to hex color values.
+hex_ = [color[1] for color in colors_]
+# Get the rgb equivalent.
+rgb = [mcolors.hex2color(color) for color in hex_]
+# Get the hsv equivalent.
+hsv = [mcolors.rgb_to_hsv(color) for color in rgb]
 
+# Split the hsv values to sort.
+hue = [color[0] for color in hsv]
+sat = [color[1] for color in hsv]
+val = [color[2] for color in hsv]
 
+# Sort by hue, saturation and value.
+ind = np.lexsort((val, sat, hue))
+sorted_colors = [colors_[i] for i in ind]
+
+colors = [c[1] for c in sorted_colors[910:]]
+
+# ################################# #
 # Global functions and procedures
 def getWeek(date):
     '''Just handy wrapper around the isocalendar method
@@ -222,11 +239,16 @@ class myProject:
         '''This procedure get back info in form of HTML
         language'''
 
+        if L is None:
+            L = []
+
         print('------------------------------------------')
         for task in self.tasks:
             if task.level == 0:
                 task.infoHTML(outL=L)
         print('------------------------------------------')
+        
+        return L
 
     @property
     def info(self):
@@ -420,12 +442,17 @@ class myProject:
             for index, mstone in enumerate(milestones):
 
                 topWBS_y = y_scale[index]
-
-                try:
-                    color = clrs[index]
+                
+                try: 
+                    color = mstone.color
+                
                 except:
-                    color = colors[mstone.level]
-
+                    try:
+                        color = clrs[index]
+                    except:
+                        color = colors[mstone.level]
+                if mstone.done:
+                    color = 'lightgreen'
 
                 ax.barh(topWBS_y, mstone.duration.days,
                           left=d2n(mstone.start),
@@ -441,7 +468,8 @@ class myProject:
                 try:
                     tx = text[index]
                 except:
-                    tx = mstone.name
+                    tx = '{} [{}]'.format(mstone.name,
+                                          self.getTaskBy_iD(mstone.iD))
 
                 ax.text(d2n(mstone.end) + 0.1,
                           topWBS_y - .4, '{}'.format(tx))
@@ -815,6 +843,17 @@ class myProject:
         else:
             return False
 
+    def listNoOwner(self):
+        '''This function retursn list of tasks that have no owners'''
+        tempList = []
+        for task in self.tasks:
+            if not task.getOwner():
+                tempList.append(task)
+        if len(tempList) > 0:
+            return tempList
+        else:
+            return False
+                
 
 class teamMember:
     '''This is main class to define a teammemeber'''
@@ -965,9 +1004,15 @@ class newTask:
     def getDuration(self):
         '''This function calculate the duration of
         the task based on sub tasks'''
-        self.duration = self.end - self.saart
-        print (self.duration.days())
-        
+        self.duration = self.end - self.start
+        print (self.duration.days)
+    
+    def shift(self, weeks):
+        '''This procedure shifts the entire task by given number of weeks'''
+        delta = dt.timedelta(weeks=weeks)
+        self.start += delta
+        self.end += delta
+        return True
 
     def setDuration(self, wks):
         '''this set up the duration of the task'''
