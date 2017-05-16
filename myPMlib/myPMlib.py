@@ -381,7 +381,7 @@ class myProject:
 
 
     def gt(self, milestones, ax=None, x_scale=None,  y_scale=None,
-           y_labels=None, text=None, clrs=None):
+           y_labels=None, text=None, inside=None, clrs=None, padx=0.1, pady=0.1):
         '''This is a procesdure to display the gantt chart
         its designed to work in a way that it will operate on the pointed
         matplotlib element whis allows to use it as single window or as
@@ -408,16 +408,20 @@ class myProject:
 
         text - (optional) the text to be placed at the end of the stak bar
                 if not set as a list then it will be task name
-
+        
+        inside - (optional) the text to be placed inside of the stak bar
+                if not set nothing will be there
+        
         clrs - colors (optional) the list of colors for each task. If not set color
             from list will be choosen by tasks level
         '''
-
+        ownFig = False
         # Ceckinf if plot axis object is delivered and if not creating new
         if ax is None:
             fig = plt.figure('{} Timeline'.format(self.name))
             fig.clear()
             ax = plt.subplot(111)
+            ownFig = True
 
         # Determining how the y_scale is delivered
         if y_scale is None:
@@ -471,8 +475,17 @@ class myProject:
                     tx = '{} [{}]'.format(mstone.name,
                                           self.getTaskBy_iD(mstone.iD))
 
-                ax.text(d2n(mstone.end) + 0.1,
-                          topWBS_y - .4, '{}'.format(tx))
+                ax.text(d2n(mstone.end) + padx,
+                          topWBS_y - pady, '{}'.format(tx))
+                
+                try:
+                    tx = inside[index]
+                except:
+                    del(tx)
+                else:
+                    ax.text(d2n(mstone.start) + padx,
+                          topWBS_y - pady, '{}'.format(tx))
+                    
 
             # Adding extra space at end of timeline
             topWBS_timeline.append(max(topWBS_timeline) + 7)
@@ -497,7 +510,7 @@ class myProject:
             myFmt = matplotlib.dates.DateFormatter("%d-%m-%y")
             ax.xaxis.set_major_formatter(myFmt)
             labelsx = ax.get_xticklabels()
-            plt.setp(labelsx, rotation=45, fontsize=6, ha='right')
+            plt.setp(labelsx, rotation=45,  ha='right')
             ax.grid(which='major', alpha=0.25)
 
             # Drawing today line
@@ -506,7 +519,10 @@ class myProject:
             # Leaved here in case the today txt is needed next to line
             # ax.text(today, topWBS_y + 0.5, 'TODAY', color='red')
 
-            return True
+            if ownFig:
+                return fig
+            else:
+                return True
         else:
             print('No milestone list delivered')
             return False

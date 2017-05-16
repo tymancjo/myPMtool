@@ -2,6 +2,7 @@
 # PM toolset library
 from myPMlib.myPMlib import *
 import matplotlib
+import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
     # Some hard coded definition for developemnt only
@@ -24,21 +25,21 @@ def tt(isPrint=False):
     
     fig.clear()
 
-    a0 = plt.subplot(511)
+    a0 = plt.subplot(411)
     
-    a1 = plt.subplot(523)
+    a1 = plt.subplot(423)
 
-    a2 = plt.subplot(524)
+    a2 = plt.subplot(424)
 
-    a3 = plt.subplot(525)
+    a3 = plt.subplot(425)
 
-    a4 = plt.subplot(526)
+    a4 = plt.subplot(426)
     
-    a5 = plt.subplot(527)
-
-    a6 = plt.subplot(528)
-    
-    a7 = plt.subplot(515)
+#    a5 = plt.subplot(527)
+#
+#    a6 = plt.subplot(528)
+#    
+    a7 = plt.subplot(414)
            
     P.gt(P.milestones, y_scale=[1,2,3,1,2,3,4,5,6,7,8,9], x_scale='w', ax=a0,
          clrs=['steelblue','purple','silver','steelblue',
@@ -57,11 +58,11 @@ def tt(isPrint=False):
     P.gt(P.m(4).tasks, x_scale='w', ax=a4)
     a4.set_title(P.m(4).nick)
     
-    P.gt(P.m(5).tasks, x_scale='w', ax=a5)
-    a5.set_title(P.m(5).nick)
-
-    P.gt(P.m(6).tasks, x_scale='w', ax=a6)
-    a6.set_title(P.m(6).nick)
+#    P.gt(P.m(5).tasks, x_scale='w', ax=a5)
+#    a5.set_title(P.m(5).nick)
+#
+#    P.gt(P.m(6).tasks, x_scale='w', ax=a6)
+#    a6.set_title(P.m(6).nick)
        
    
     P.gt([t for t in P.infoHTML()[::-1] if t in P.listNoOwner()],
