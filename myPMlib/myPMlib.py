@@ -185,8 +185,15 @@ class myProject:
 
         where P is myProject class object.
         '''
-        with open(filename, 'wb') as output:
-            pickle.dump(self, output, pickle.DEFAULT_PROTOCOL)
+        try:
+            tempfile = 'temp_' + filename
+            with open(tempfile, 'wb') as output:
+                pickle.dump(self, output, pickle.DEFAULT_PROTOCOL)
+        except:
+            print('There is issue with pickle. Save aborded to protect file.')
+        else:
+            with open(filename, 'wb') as output:
+                pickle.dump(self, output, pickle.DEFAULT_PROTOCOL)
 
     def addToTeam(self, member):
         '''this method add person to team list'''
@@ -247,7 +254,7 @@ class myProject:
             if task.level == 0:
                 task.infoHTML(outL=L)
         print('------------------------------------------')
-        
+
         return L
 
     @property
@@ -408,10 +415,10 @@ class myProject:
 
         text - (optional) the text to be placed at the end of the stak bar
                 if not set as a list then it will be task name
-        
+
         inside - (optional) the text to be placed inside of the stak bar
                 if not set nothing will be there
-        
+
         clrs - colors (optional) the list of colors for each task. If not set color
             from list will be choosen by tasks level
         '''
@@ -446,10 +453,10 @@ class myProject:
             for index, mstone in enumerate(milestones):
 
                 topWBS_y = y_scale[index]
-                
-                try: 
+
+                try:
                     color = mstone.color
-                
+
                 except:
                     try:
                         color = clrs[index]
@@ -477,7 +484,7 @@ class myProject:
 
                 ax.text(d2n(mstone.end) + padx,
                           topWBS_y - pady, '{}'.format(tx))
-                
+
                 try:
                     tx = inside[index]
                 except:
@@ -485,7 +492,7 @@ class myProject:
                 else:
                     ax.text(d2n(mstone.start) + padx,
                           topWBS_y - pady, '{}'.format(tx))
-                    
+
 
             # Adding extra space at end of timeline
             topWBS_timeline.append(max(topWBS_timeline) + 7)
@@ -602,10 +609,10 @@ class myProject:
 
             # Plotting milestones if delivered by separate list
             if milestones is not None:
-                self.gt(milestones=milestones, ax=ax_t, y_labels=None)
+                self.gt(milestones=milestones, ax=ax_t, y_labels=None, padx=2)
             else:
                 milestones = [t for t in tasklist if t.level ==0]
-                self.gt(milestones=milestones, ax=ax_t, y_labels=None)
+                self.gt(milestones=milestones, ax=ax_t, y_labels=None, padx=2)
 
             # Drawing the t bottom right gantt
             names = [t.name for t in tasklist]
@@ -616,8 +623,8 @@ class myProject:
                 if x.done:
                     col[i] = 'green'
 
-            self.gt(milestones=tasklist, x_scale='w', ax=ax_r, y_labels=names, text=text,
-                    clrs=col)
+            self.gt(milestones=tasklist, x_scale='w', ax=ax_r, y_labels='', text=names,
+                    clrs=col, padx=1)
 
 
 
@@ -869,7 +876,7 @@ class myProject:
             return tempList
         else:
             return False
-                
+
 
 class teamMember:
     '''This is main class to define a teammemeber'''
@@ -1022,7 +1029,7 @@ class newTask:
         the task based on sub tasks'''
         self.duration = self.end - self.start
         print (self.duration.days)
-    
+
     def shift(self, weeks):
         '''This procedure shifts the entire task by given number of weeks'''
         delta = dt.timedelta(weeks=weeks)
